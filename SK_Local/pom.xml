@@ -2,18 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>SK-Project9000</artifactId>
+        <groupId>Project</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>Project</groupId>
-    <artifactId>SK-Project9000</artifactId>
-    <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
-    <modules>
-        <module>SK_Local</module>
-        <module>SK_Remote</module>
-        <module>SK_Test</module>
-        <module>SK_API</module>
-    </modules>
+    <artifactId>SK_Local</artifactId>
 
 
 </project>

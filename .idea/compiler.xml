@@ -6,7 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Softverske Komponente" />
+        <module name="SK_Remote" />
+        <module name="SK_API" />
+        <module name="SK_Test" />
+        <module name="SK_Local" />
       </profile>
     </annotationProcessing>
   </component>
