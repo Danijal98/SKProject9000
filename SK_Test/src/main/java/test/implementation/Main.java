@@ -14,17 +14,18 @@ public class Main {
         String type = sc.nextLine();
         //Driver driver = new Driver(args[0]);
         Manager manager = null;//TODO
-        if(type.equals("local")){
+        if (type.equals("local")) {
             manager = local.implemetation.ManagerImplementation.getInstance();
             System.out.println("Uspesno konektovanje majmuni");
-        }else if(type.equals("remote")){
+        } else if (type.equals("remote")) {
             manager = remote.implementation.ManagerImplementation.getInstance();
         }
         //Manager manager = driver.getManager();
-        Connection connection = manager.connect(type,"admin","123");
-        connection.addBlacklisted(".exe");
+        Connection connection = manager.connect(type, "admin", "123");
+        //connection.lsDir("");
+        //connection.addUser("mnogo sam", "te pustio", UserPrivilege.ADMIN);
         //connection.addUser("admin2","1234", UserPrivilege.ADMIN);
-        connection.mkDir(File.separator,"root");
+        connection.mkDir(File.separator, "root");
     }
 
 }

@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.*;
+import java.util.ArrayList;
 
 public class ConnectionImplementation implements Connection {
 
@@ -15,9 +16,8 @@ public class ConnectionImplementation implements Connection {
     private UserPrivilege currentPrivilege;
 
     ConnectionImplementation(String path, String user, String password) {
-        this.path = "C:\\Users\\Aleksa\\Desktop\\Madness";
+        this.path = path;
         File file = new File(this.path + File.separator + "users.json");
-        System.out.println(new File(".").getAbsoluteFile());
         if (!file.exists()) {
             addUser(user, password, UserPrivilege.ADMIN);
             file = new File(this.path + File.separator + "users.json");
@@ -65,7 +65,7 @@ public class ConnectionImplementation implements Connection {
         File file = new File(path + File.separator + "users.json");
         if (file.exists()) {
             if (currentPrivilege.equals(UserPrivilege.ADMIN)) {
-                jsonObject.put("privilege", UserPrivilege.GUEST);
+                jsonObject.put("privilege", privilege);
                 FileReader fileReader = null;
                 try {
                     fileReader = new FileReader(file);
@@ -124,11 +124,28 @@ public class ConnectionImplementation implements Connection {
     }
 
     public boolean isBlacklisted(String extension) {
+        File file = new File(this.path + File.separator + "blacklisted.json");
+        if (!file.exists()) {
+            return false;
+        }
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(file);
+            JSONObject jsonObject = new JSONObject(new JSONTokener(fileReader));
+            JSONArray jsonArray = jsonObject.getJSONArray("blacklisted");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                String ex = jsonArray.get(i).toString();
+                if (ex.equals(extension))
+                    return true;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     public void addBlacklisted(String extension) {
-        File file = new File(this.path + File.separator + "blacklisted.json"); //da vidimo da li pravimo odma ili kad se prvi put pojavi blacklisted
+        File file = new File(this.path + File.separator + "blacklisted.json");
         if (file.exists()) {
             try {
                 FileReader fileReader = new FileReader(file);
@@ -142,12 +159,12 @@ public class ConnectionImplementation implements Connection {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }else{
+        } else {
             FileWriter fileWriter = null;
             try {
                 fileWriter = new FileWriter(file, false);
-                JSONObject jsonObject=new JSONObject();
-                jsonObject.put("blacklisted",new JSONArray().put(extension));
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("blacklisted", new JSONArray().put(extension));
                 fileWriter.write(jsonObject.toString());
                 fileWriter.close();
             } catch (IOException e) {
@@ -157,10 +174,38 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void removeBlacklisted(String extension) {
-
+        File file = new File(this.path + File.separator + "blacklisted.json");
+        if (file.exists()) {
+            try {
+                FileReader fileReader = new FileReader(file);
+                JSONObject jsonObject = new JSONObject(new JSONTokener(fileReader));
+                JSONArray jsonArray = jsonObject.getJSONArray("blacklisted");
+                jsonArray.put(extension);
+                fileReader.close();
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    String ex = jsonArray.get(i).toString();
+                    if (ex.equals(extension)) {
+                        jsonArray.remove(i);
+                        return;
+                    }
+                }
+                FileWriter fileWriter = new FileWriter(file, false);
+                fileWriter.write(jsonObject.toString());
+                fileWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void lsDir(String path) {
-
+        if (path.equals("")) {
+            path = this.path;
+        }
+        File file = new File(path);
+        String[] dirs = file.list();
+        for (int i = 0; i < dirs.length; i++) {
+            System.out.println(dirs[i]);
+        }
     }
 }
