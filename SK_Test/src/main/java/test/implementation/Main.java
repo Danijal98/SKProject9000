@@ -2,6 +2,7 @@ package test.implementation;
 
 import api.documentation.Connection;
 import api.documentation.Manager;
+import api.documentation.UserPrivilege;
 
 import java.io.File;
 import java.util.Scanner;
@@ -20,7 +21,9 @@ public class Main {
             manager = remote.implementation.ManagerImplementation.getInstance();
         }
         //Manager manager = driver.getManager();
-        Connection connection = manager.connect(type);
+        Connection connection = manager.connect(type,"admin","123");
+        connection.addBlacklisted(".exe");
+        //connection.addUser("admin2","1234", UserPrivilege.ADMIN);
         connection.mkDir(File.separator,"root");
     }
 

@@ -7,7 +7,7 @@ public class ManagerImplementation implements Manager {
 
     public static ManagerImplementation instance;
 
-    private ManagerImplementation(){
+    private ManagerImplementation() {
     }
 
     public static ManagerImplementation getInstance() {
@@ -16,8 +16,8 @@ public class ManagerImplementation implements Manager {
         return instance;
     }
 
-    public Connection connect(String connection) {
-        return new ConnectionImplementation();
+    public Connection connect(String connection, String username, String password) {
+        return new ConnectionImplementation(connection, username, password);
     }
 
     public Connection initConnection(String DatabaseName) {
