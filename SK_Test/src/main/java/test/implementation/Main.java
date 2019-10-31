@@ -1,9 +1,7 @@
 package test.implementation;
 
 import api.documentation.Connection;
-import api.documentation.Driver;
 import api.documentation.Manager;
-//import local.implemetation.ManagerImplementation;
 
 import java.io.File;
 import java.util.Scanner;

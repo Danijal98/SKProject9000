@@ -12,5 +12,8 @@
         <module name="SK_Local" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Softverske Komponente" target="1.5" />
+    </bytecodeTargetLevel>
   </component>
 </project>

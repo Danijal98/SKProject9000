@@ -22,7 +22,9 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void mkDir(String path, String dirName) {
-
+        // Tree
+        // /root/folder1/folder2/fajl
+        // /root/folder1/fajl
     }
 
     public void mkFile(String path, String fileName) {
