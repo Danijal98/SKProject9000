@@ -7,7 +7,6 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.*;
-import java.util.ArrayList;
 
 public class ConnectionImplementation implements Connection {
 

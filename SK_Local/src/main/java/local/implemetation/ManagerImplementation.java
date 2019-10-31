@@ -16,8 +16,8 @@ public class ManagerImplementation implements Manager {
         return instance;
     }
 
-    public Connection connect(String connection, String username, String password) {
-        return new ConnectionImplementation(connection, username, password);
+    public Connection connect(String path, String username, String password) {
+        return new ConnectionImplementation(path, username, password);
     }
 
     public Connection initConnection(String DatabaseName) {
