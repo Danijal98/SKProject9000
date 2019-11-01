@@ -27,4 +27,6 @@ public interface Connection {
     void removeBlacklisted(String extension);
 
     void lsDir(String path, boolean subdirectories);
+
+    //Change privileges (Username, privilege type)
 }

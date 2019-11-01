@@ -38,24 +38,36 @@ public class Main {
         while (true) {
             System.out.println("Input username and password divided with space (ex. admin 123)");
             un_pass = sc.nextLine().split(" ");
-            connection = manager.connect(path, un_pass[0], un_pass[1]);
-            if (connection.isLoggedIn()) break;
+            try {
+                connection = manager.connect(path, un_pass[0], un_pass[1]);
+                if (connection.isLoggedIn()) break;
+            }catch (IndexOutOfBoundsException e){
+                System.out.println("Oops you didn't give enough arguments.");
+            }
         }
         System.out.println("You are ready to go! If you need help just type \"help\" command to display all commands\n" +
                 "Or \"help\" <command> to see what that command does.\nType \"exit\" to close the program");
         while (true) {
             String command;
             String arguments;
-            String[] line;
-            line = sc.nextLine().split("\\s+", 2);
+            String line;
+            String[] parts = null;
+            line = sc.nextLine();
+            if (line.equalsIgnoreCase("exit")) {
+                break;
+            }
             try {
-                command = line[0];
-                arguments = line[1];
-                if (!doCommand(connection, command, arguments)) {
-                    System.out.println("Unknown command!");
-                }
-                if (line.equals("exit")) {
-                    break;
+                if (line.contains(" ")){
+                    parts = sc.nextLine().split("\\s+", 2);
+                    command = parts[0];
+                    arguments = parts[1];
+                    if (!doCommand(connection, command, arguments)) {
+                        System.out.println("Unknown command!");
+                    }
+                }else{
+                    if (!doCommand(connection, line, "")) {
+                        System.out.println("Unknown command!");
+                    }
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
                 System.out.println("Oops you didn't give enough arguments.");
