@@ -34,9 +34,13 @@ public class Main {
         //Input root path, username and path
         System.out.println("Input root path!");
         path = sc.nextLine();
-        System.out.println("Input username and password divided with space (ex. admin 123)");
-        un_pass = sc.nextLine().split(" ");
-        Connection connection = manager.connect(path, un_pass[0], un_pass[1]);
+        Connection connection = null;
+        while (true) {
+            System.out.println("Input username and password divided with space (ex. admin 123)");
+            un_pass = sc.nextLine().split(" ");
+            connection = manager.connect(path, un_pass[0], un_pass[1]);
+            if (connection.isLoggedIn()) break;
+        }
         System.out.println("You are ready to go! If you need help just type \"help\" command to display all commands\n" +
                 "Or \"help\" <command> to see what that command does.\nType \"exit\" to close the program");
         while (true) {
@@ -44,20 +48,24 @@ public class Main {
             String arguments;
             String[] line;
             line = sc.nextLine().split("\\s+", 2);
-            command = line[0];
-            arguments = line[1];
-            if (!doCommand(connection, command, arguments)) {
-                System.out.println("Unknown command!");
-            }
-            if (line.equals("exit")) {
-                break;
+            try {
+                command = line[0];
+                arguments = line[1];
+                if (!doCommand(connection, command, arguments)) {
+                    System.out.println("Unknown command!");
+                }
+                if (line.equals("exit")) {
+                    break;
+                }
+            } catch (ArrayIndexOutOfBoundsException e) {
+                System.out.println("Oops you didn't give enough arguments.");
             }
         }
     }
 
     private static boolean doCommand(Connection connection, String command, String arguments) {
         if (command.equals("upload")) {
-            if(!connection.isAdmin()){
+            if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
             }
             connection.upload(arguments);
@@ -67,31 +75,35 @@ public class Main {
             String[] parts = arguments.split(" ");
             connection.set_meta(parts[0], parts[1], parts[2]);
         } else if (command.equals("addUser")) {
-            if(!connection.isAdmin()){
+            if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
+                return true;
             }
             String[] parts = arguments.split(" ");
             UserPrivilege userPrivilege = null;
-            if (parts[2].equals("ADMIN")) {
+            if (parts[2].equalsIgnoreCase("ADMIN")) {
                 userPrivilege = UserPrivilege.ADMIN;
-            } else if (parts[2].equals("GUEST")) {
+            } else if (parts[2].equalsIgnoreCase("GUEST")) {
                 userPrivilege = UserPrivilege.GUEST;
+            } else {
+                System.out.println("Privilege is not set appropriately.");
+                return true;
             }
             connection.addUser(parts[0], parts[1], userPrivilege);
         } else if (command.equals("mkDir")) {
-            if(!connection.isAdmin()){
+            if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
             }
             String[] parts = arguments.split(" ");
             connection.mkDir(parts[0], parts[1]);
         } else if (command.equals("mkFile")) {
-            if(!connection.isAdmin()){
+            if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
             }
             String[] parts = arguments.split(" ");
             connection.mkFile(parts[0], parts[1]);
         } else if (command.equals("deleteItem")) {
-            if(!connection.isAdmin()){
+            if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
             }
             String[] parts = arguments.split(" ");
@@ -103,7 +115,8 @@ public class Main {
         } else if (command.equals("removeBlacklisted")) {
             connection.removeBlacklisted(arguments);
         } else if (command.equals("lsDir")) {
-            connection.lsDir(arguments);
+            String[] parts = arguments.split(" ");
+            connection.lsDir(parts[0], toBoolean(parts[1]));
         } else if (command.equals("isAdmin")) {
             if (connection.isAdmin()) {
                 System.out.println("User is admin!");
@@ -120,6 +133,11 @@ public class Main {
             return false;
         }
         return true;
+    }
+
+    private static boolean toBoolean(String string) {
+        if (string.equals("true")) return true;
+        return false;
     }
 
 }

@@ -7,6 +7,8 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConnectionImplementation implements Connection {
 
@@ -35,6 +37,9 @@ public class ConnectionImplementation implements Connection {
             fileReader.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        if(currentUser==null && currentPrivilege==null) {
+
         }
     }
 
@@ -197,14 +202,28 @@ public class ConnectionImplementation implements Connection {
         }
     }
 
-    public void lsDir(String path) {
+    public void lsDir(String path, boolean subdirectories) { //da se doda da prikaze i za poddirektorijum
         if (path.equals("")) {
             path = this.path;
         }
-        File file = new File(path);
-        String[] dirs = file.list();
-        for (int i = 0; i < dirs.length; i++) {
-            System.out.println(dirs[i]);
+        List<File> files = new ArrayList<File>();
+        getFiles(path, files, subdirectories);
+        for (int i = 0; i < files.size(); i++) {
+            if (files.get(i).toString().equals("users.json") || files.get(i).toString().equals("blacklisted.json"))
+                continue;
+            System.out.println(files.get(i).getName());
         }
+    }
+
+    private void getFiles(String directoryName, List<File> files, boolean subdirectories) {
+        File directory = new File(directoryName);
+        File[] fileList = directory.listFiles();
+        if (fileList != null)
+            for (File file : fileList) {
+                files.add(file);
+                if (file.isDirectory() && subdirectories) {
+                    getFiles(file.getAbsolutePath(), files, subdirectories);
+                }
+            }
     }
 }
