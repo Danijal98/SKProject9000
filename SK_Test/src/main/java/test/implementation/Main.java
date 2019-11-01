@@ -58,7 +58,8 @@ public class Main {
             }
             try {
                 if (line.contains(" ")){
-                    parts = sc.nextLine().split("\\s+", 2);
+                    //TODO ovo prebaciti na metodu doCommand da prima String... kao komandu i argumente pa tamo proveravati
+                    parts = line.split("\\s+", 2);
                     command = parts[0];
                     arguments = parts[1];
                     if (!doCommand(connection, command, arguments)) {
