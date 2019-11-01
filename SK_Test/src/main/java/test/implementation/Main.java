@@ -65,10 +65,10 @@ public class Main {
 
     private static boolean doCommand(Connection connection, String command, String arguments) {
         if (command.equals("upload")) {
-            if (!connection.isAdmin()) {
+            if (!connection.isAdmin())
                 System.out.println("This command is only for admin!");
-            }
-            connection.upload(arguments);
+            else
+                connection.upload(arguments);
         } else if (command.equals("download")) {
             connection.download(arguments);
         } else if (command.equals("set_meta")) {
@@ -93,18 +93,21 @@ public class Main {
         } else if (command.equals("mkDir")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
+                return true;
             }
             String[] parts = arguments.split(" ");
             connection.mkDir(parts[0], parts[1]);
         } else if (command.equals("mkFile")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
+                return true;
             }
             String[] parts = arguments.split(" ");
             connection.mkFile(parts[0], parts[1]);
         } else if (command.equals("deleteItem")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
+                return true;
             }
             String[] parts = arguments.split(" ");
             connection.deleteItem(parts[0], parts[1]);
