@@ -115,15 +115,13 @@ public class Main {
                 System.out.println("This command is only for admin!");
                 return true;
             }
-            String[] parts = arguments.split(" ");
-            connection.mkFile(parts[0], parts[1]);
+            connection.mkFile(arguments);
         } else if (command.equals("deleteItem")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
                 return true;
             }
-            String[] parts = arguments.split(" ");
-            connection.deleteItem(parts[0], parts[1]);
+            connection.deleteItem(arguments);
         } else if (command.equals("isBlacklisted")) {
             connection.isBlacklisted(arguments);
         } else if (command.equals("addBlacklisted")) {

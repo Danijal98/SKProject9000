@@ -8,7 +8,7 @@ public class ConnectionImplementation implements Connection {
         return false;
     }
 
-    public boolean download(String... paths) {
+    public boolean download(String path) {
         return false;
     }
 
@@ -24,11 +24,11 @@ public class ConnectionImplementation implements Connection {
 
     }
 
-    public void mkFile(String path, String fileName) {
+    public void mkFile(String path) {
 
     }
 
-    public void deleteItem(String path, String fileName) {
+    public void deleteItem(String path) {
 
     }
 

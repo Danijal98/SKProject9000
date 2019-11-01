@@ -4,7 +4,7 @@ public interface Connection {
 
     boolean upload(String... paths); //one or more and ZIP
 
-    boolean download(String... paths);
+    boolean download(String path);
 
     void set_meta(String path, String key, String value);
 
@@ -12,9 +12,9 @@ public interface Connection {
 
     void mkDir(String path, String dirName);
 
-    void mkFile(String path, String fileName);
+    void mkFile(String path);
 
-    void deleteItem(String path, String fileName);
+    void deleteItem(String path);
 
     boolean isLoggedIn();
 

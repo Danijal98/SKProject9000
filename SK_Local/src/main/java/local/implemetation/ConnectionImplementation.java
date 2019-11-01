@@ -31,19 +31,19 @@ public class ConnectionImplementation implements Connection {
                 JSONObject jsonobj1 = jsonArray.getJSONObject(i);
                 if (jsonobj1.get("username").toString().equals(user) && jsonobj1.get("password").toString().equals(password)) {
                     currentUser = user;
-                    currentPrivilege = getEnumPriv(jsonobj1.get("privilege").toString());
+                    currentPrivilege = getEnumPrivilege(jsonobj1.get("privilege").toString());
                 }
             }
             fileReader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if(currentUser==null && currentPrivilege==null) {
+        if (currentUser == null && currentPrivilege == null) {
 
         }
     }
 
-    private UserPrivilege getEnumPriv(String privilege) {
+    private UserPrivilege getEnumPrivilege(String privilege) {
         if (privilege.equals("ADMIN"))
             return UserPrivilege.ADMIN;
         return UserPrivilege.GUEST;
@@ -53,8 +53,54 @@ public class ConnectionImplementation implements Connection {
         return false;
     }
 
-    public boolean download(String... paths) {
+    public boolean download(String path) {
+        if (!path.contains(this.path)) {
+            System.out.println("Can't download from there.");
+            return false;
+        }
+        String home = System.getProperty("user.home");
+        File source = new File(path);
+        File dest = new File(home + File.separator + "Downloads" + File.separator + source.getName());
+        if (downloadDir(source, dest)) {
+            System.out.println("Done!");
+            return true;
+        }
         return false;
+    }
+
+    private boolean downloadDir(File source, File dest) {
+        if (source.isDirectory()) {
+            if (!dest.exists()) {
+                dest.mkdir();
+            }
+            String[] children = source.list();
+            for (int i = 0; i < children.length; i++) {
+                downloadDir(new File(source, children[i]),
+                        new File(dest, children[i]));
+            }
+        } else {
+            OutputStream out = null;
+            InputStream in = null;
+            try {
+                in = new FileInputStream(source);
+                out = new FileOutputStream(dest);
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                in.close();
+                out.close();
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found!");
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return true;
     }
 
     public void set_meta(String path, String key, String value) {
@@ -62,7 +108,6 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addUser(String name, String password, UserPrivilege privilege) {
-
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("username", name);
         jsonObject.put("password", password);
@@ -85,6 +130,7 @@ public class ConnectionImplementation implements Connection {
                 }
             } else {
                 System.out.println("Sorry, you can't do that.");
+                return;
             }
         } else {
             jsonObject.put("privilege", UserPrivilege.ADMIN);
@@ -101,6 +147,7 @@ public class ConnectionImplementation implements Connection {
                 e.printStackTrace();
             }
         }
+        System.out.println("Done!");
     }
 
     public void mkDir(String path, String dirName) {
@@ -109,12 +156,69 @@ public class ConnectionImplementation implements Connection {
         // /root/folder1/fajl
     }
 
-    public void mkFile(String path, String fileName) {
-
+    public void mkFile(String path) {
+        if (!path.contains(this.path)) {
+            System.out.println("Can't do that!");
+            return;
+        }
+        File file = new File(path);
+        if (file.exists()) {
+            System.out.println("File already exists!");
+            return;
+        }
+        try {
+            if (file.createNewFile()) {
+                System.out.println("File is created.");
+            } else {
+                System.out.println("Something went wrong...");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Something went in and out and really bad.");
+        }
     }
 
-    public void deleteItem(String path, String fileName) {
+    public void deleteItem(String path) {
+        File file = new File(path);
+        if (!path.contains(this.path) || currentPrivilege.equals(UserPrivilege.GUEST) || file.getName().equals("users.json") || file.getName().equals("blacklisted.json") || currentPrivilege.equals(UserPrivilege.GUEST)) {
+            System.out.println("Can't do that");
+            return;
+        }
+        if (deleteFolder(path)) {
+            System.out.println("Done!");
+        } else {
+            System.out.println("Something went wrong.");
+        }
+    }
 
+    private static void deleteFile(File file) throws IOException {
+        if (file.isDirectory()) {
+            String[] files = file.list();
+            for (String f : files) {
+                File fileDelete = new File(file, f);
+                deleteFile(fileDelete);
+            }
+            file.delete();
+        } else {
+            file.delete();
+        }
+    }
+
+    public static boolean deleteFolder(String dir) {
+        File directory = new File(dir);
+        if (!directory.exists()) {
+            System.out.println("File does not exist " + directory);
+            return false;
+        } else {
+            try {
+                deleteFile(directory);
+                directory.delete();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean isLoggedIn() {
@@ -139,12 +243,15 @@ public class ConnectionImplementation implements Connection {
             JSONArray jsonArray = jsonObject.getJSONArray("blacklisted");
             for (int i = 0; i < jsonArray.length(); i++) {
                 String ex = jsonArray.get(i).toString();
-                if (ex.equals(extension))
+                if (ex.equals(extension)) {
+                    System.out.println(extension + " is blacklisted.");
                     return true;
+                }
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        System.out.println(extension + " is not blacklisted.");
         return false;
     }
 
@@ -175,6 +282,7 @@ public class ConnectionImplementation implements Connection {
                 e.printStackTrace();
             }
         }
+        System.out.println("Done!");
     }
 
     public void removeBlacklisted(String extension) {
@@ -196,6 +304,7 @@ public class ConnectionImplementation implements Connection {
                 FileWriter fileWriter = new FileWriter(file, false);
                 fileWriter.write(jsonObject.toString());
                 fileWriter.close();
+                System.out.println("Done!");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -222,7 +331,7 @@ public class ConnectionImplementation implements Connection {
             for (File file : fileList) {
                 files.add(file);
                 if (file.isDirectory() && subdirectories) {
-                    getFiles(file.getAbsolutePath(), files, subdirectories);
+                    getFiles(file.getAbsolutePath(), files, true);
                 }
             }
     }
