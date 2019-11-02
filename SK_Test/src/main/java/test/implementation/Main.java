@@ -84,13 +84,24 @@ public class Main {
         if (command.equals("upload")) {
             if (!connection.isAdmin())
                 System.out.println("This command is only for admin!");
-            else
-                connection.upload(arguments);
+            else{
+                String[] parts = arguments.split(";", 3);
+                if(parts.length==2){
+                    String[] paths = parts[1].split(",");
+                    connection.upload(parts[0],paths);
+                }else if(parts.length==3){
+                    String[] paths = parts[2].split(",");
+                    connection.upload(parts[0],parts[1],paths);
+                }
+            }
         } else if (command.equals("download")) {
             connection.download(arguments);
-        } else if (command.equals("set_meta")) {
+        } else if (command.equals("addMeta")) {
+            String[] parts = arguments.split(" ",3);
+            connection.addMeta(parts[0], parts[1], parts[2]);
+        } else if(command.equals("getMeta")){
             String[] parts = arguments.split(" ");
-            connection.set_meta(parts[0], parts[1], parts[2]);
+            connection.getMeta(parts[0],parts[1]);
         } else if (command.equals("addUser")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
@@ -155,7 +166,7 @@ public class Main {
         } else if (command.equals("help")) {
             connection.help();
         } else if (command.equals("clear")) {
-           // connection.clearScreen();
+            connection.clearScreen();
         } else {
             return false;
         }

@@ -4,7 +4,12 @@ import api.documentation.Connection;
 import api.documentation.UserPrivilege;
 
 public class ConnectionImplementation implements Connection {
-    public boolean upload(String... paths) {
+
+    public boolean upload(String destination, String... paths) {
+        return false;
+    }
+
+    public boolean upload(String destination, String zipName, String... paths) {
         return false;
     }
 
@@ -12,7 +17,11 @@ public class ConnectionImplementation implements Connection {
         return false;
     }
 
-    public void set_meta(String path, String key, String value) {
+    public void addMeta(String path, String key, String value) {
+
+    }
+
+    public void getMeta(String path, String key) {
 
     }
 

@@ -11,12 +11,15 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ConnectionImplementation implements Connection {
 
+    private final String STORAGE = "storage";
+    private final String META_STORAGE = "metaStorage";
     private String path;
     private String currentUser;
     private UserPrivilege currentPrivilege;
@@ -30,6 +33,10 @@ public class ConnectionImplementation implements Connection {
             mkDir(str.split(""));
             addUser(user, password, UserPrivilege.ADMIN);
             file = new File(this.path + File.separator + "users.json");
+            File storage = new File(this.path + File.separator + STORAGE);
+            File metaStorage = new File(this.path + File.separator + META_STORAGE);
+            storage.mkdirs();
+            metaStorage.mkdirs();
         }
         try {
             FileReader fileReader = new FileReader(file);
@@ -57,16 +64,37 @@ public class ConnectionImplementation implements Connection {
         return UserPrivilege.GUEST;
     }
 
-    public boolean upload(String... paths) {
-        return false;
+    @Override
+    public boolean upload(String destination, String[] paths) {
+        if (paths.length > 1) {
+            File pom = new File(paths[0]);
+            String createdName = pom.getName();
+            return upload(destination, createdName, paths);
+        } else {
+            File src = new File(paths[0]);
+            File dest = new File(this.path + File.separator + STORAGE + File.separator + destination + File.separator + src.getName());
+            downloadDir(src, dest);
+            return true;
+        }
+    }
+
+    @Override
+    public boolean upload(String destination, String zipName, String[] paths) {
+        //Zipujemo sve, prebacimo taj zip u destination, obrisemo zip originalni
+        zipFiles(paths);
+        File origin = new File(paths[0].concat(".zip"));
+        File copy = new File(this.path + File.separator + STORAGE + File.separator + destination + File.separator + zipName + ".zip");
+        downloadDir(origin, copy);
+        origin.delete();
+        return true;
     }
 
     public boolean download(String path) {
         String home = System.getProperty("user.home");
-        File source = new File(this.path + File.separator + path);
-        File dest = new File(home + File.separator + "Downloads" + File.separator + source.getName());
+        File source = new File(this.path + File.separator + STORAGE + File.separator + path);
+        File dest = new File(home + File.separator + source.getName());
         if (downloadDir(source, dest)) {
-            System.out.println("Done!");
+            System.out.println("File downloaded at " + dest.getPath());
             return true;
         }
         return false;
@@ -107,7 +135,64 @@ public class ConnectionImplementation implements Connection {
         return true;
     }
 
-    public void set_meta(String path, String key, String value) {
+    public void addMeta(String path, String key, String value) {
+        String newPath = META_STORAGE + File.separator + path;
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(key, value);
+
+        File file = new File(this.path + File.separator + newPath);
+        file.getParentFile().mkdirs();
+
+        if (file.exists()) {
+            FileReader fileReader = null;
+            try {
+                fileReader = new FileReader(file);
+                JSONObject jsonObjectExisting = new JSONObject(new JSONTokener(fileReader));
+                JSONArray array = jsonObjectExisting.getJSONArray("meta");
+                array.put(jsonObject);
+                fileReader.close();
+                FileWriter fileWriter = new FileWriter(file, false);
+                fileWriter.write(jsonObjectExisting.toString());
+                fileWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            FileWriter fileWriter = null;
+            try {
+                JSONObject jsonobj = new JSONObject();
+                JSONArray jsonArray = new JSONArray();
+                jsonArray.put(jsonObject);
+                jsonobj.put("meta", jsonArray);
+                fileWriter = new FileWriter(file);
+                fileWriter.write(jsonobj.toString());
+                fileWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void getMeta(String path, String key) {
+        String newPath = META_STORAGE + File.separator + path;
+
+        File file = new File(this.path + File.separator + newPath);
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(file);
+            JSONObject jsonObjectExisting = new JSONObject(new JSONTokener(fileReader));
+            JSONArray array = jsonObjectExisting.getJSONArray("meta");
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject jsonObject = array.getJSONObject(i);
+                if (jsonObject.has(key)) {
+                    System.out.println(jsonObject.getString(key));
+                }
+            }
+            fileReader.close();
+        } catch (IOException e) {
+
+        }
 
     }
 
@@ -151,7 +236,7 @@ public class ConnectionImplementation implements Connection {
                 e.printStackTrace();
             }
         }
-        System.out.println("Done!");
+        System.out.println("User added!");
     }
 
     public boolean mkDir(String[] arguments) {
@@ -172,7 +257,7 @@ public class ConnectionImplementation implements Connection {
                 int from = Integer.parseInt(fromTo[0]);
                 int to = Integer.parseInt(fromTo[1]);
                 for (int i = from; i <= to; i++) {
-                    File file = new File(this.path + File.separator + path + File.separator + name + i);
+                    File file = new File(this.path + File.separator + STORAGE + File.separator + path + File.separator + name + i);
                     if (!file.exists()) {
                         if (file.mkdirs()) {
                             System.out.println("Directory created!");
@@ -184,7 +269,7 @@ public class ConnectionImplementation implements Connection {
                     }
                 }
             } else {
-                File file = new File(this.path + File.separator + path + File.separator + dirName);
+                File file = new File(this.path + File.separator + STORAGE + File.separator + path + File.separator + dirName);
                 if (!file.exists()) {
                     if (file.mkdirs()) {
                         System.out.println("Directory created!");
@@ -200,7 +285,7 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void mkFile(String path) {
-        File file = new File(this.path + File.separator + path);
+        File file = new File(this.path + File.separator + STORAGE + File.separator + path);
         String extension = "";
 
         int i = file.getName().lastIndexOf('.');
@@ -234,7 +319,7 @@ public class ConnectionImplementation implements Connection {
             System.out.println("Can't do that");
             return;
         }
-        if (deleteFolder(this.path + File.separator + path)) {
+        if (deleteFolder(this.path + File.separator + STORAGE + File.separator + path)) {
             System.out.println("Done!");
         } else {
             System.out.println("Something went wrong.");
@@ -365,7 +450,7 @@ public class ConnectionImplementation implements Connection {
             path = this.path;
         }
         List<File> files = new ArrayList<File>();
-        getFiles(this.path + File.separator + path, files, subdirectories);
+        getFiles(this.path + File.separator + STORAGE + File.separator + path, files, subdirectories);
         for (int i = 0; i < files.size(); i++) {
             if (files.get(i).getName().equals("users.json") || files.get(i).getName().equals("blacklisted.json"))
                 continue;
@@ -378,16 +463,16 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("FUNCTION", "DESCRIPTION", "ARGUMENTS");
         at.addRule();
-        at.addRow("upload", "upload - ", "");
+        at.addRow("upload", "uploads chosen files/file to chosen destination", "upload <path>;<name(optional if zip)>;<path1>,<path2>");
         at.addRule();
-        at.addRow("download", "download - ", "");
+        at.addRow("download", "downloads files from chosen path to user.home", "download <path>");
         at.addRule();
-        at.addRow("set_meta", "sets meta data to a chosen file", "set_meta <path> <key value>");
+        at.addRow("addMeta", "adds meta data to a chosen file", "addMeta <path> <key value>");
         at.addRule();
         at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
         at.addRule();
         at.addRow("mkDir", "makes directory to the chosen path from storage root. If no directory is given, root is chosen", "mkDir <path> <dirName> |" +
-                                                                            "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
+                "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
         at.addRule();
         at.addRow("mkFile", "makes file to the chosen path", "mkFile <path> <fileName>");
         at.addRule();
@@ -410,7 +495,7 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void clearScreen() {
-        for(int i=0;i<50;i++)
+        for (int i = 0; i < 50; i++)
             System.out.println();
     }
 
@@ -428,26 +513,26 @@ public class ConnectionImplementation implements Connection {
 
     private void zipFiles(String... filePaths) {
         try {
-            File firstFile = new File(filePaths[0]);
-            String zipFileName = firstFile.getName().concat(".zip");
+            List<String> srcFiles = Arrays.asList(filePaths);
+            FileOutputStream fos = new FileOutputStream(filePaths[0].concat(".zip"));
+            ZipOutputStream zipOut = new ZipOutputStream(fos);
+            for (String srcFile : srcFiles) {
+                File fileToZip = new File(srcFile);
+                FileInputStream fis = new FileInputStream(fileToZip);
+                ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+                zipOut.putNextEntry(zipEntry);
 
-            FileOutputStream fos = new FileOutputStream(zipFileName);
-            ZipOutputStream zos = new ZipOutputStream(fos);
-
-            for (String aFile : filePaths) {
-                zos.putNextEntry(new ZipEntry(new File(aFile).getName()));
-
-                byte[] bytes = Files.readAllBytes(Paths.get(aFile));
-                zos.write(bytes, 0, bytes.length);
-                zos.closeEntry();
+                byte[] bytes = new byte[1024];
+                int length;
+                while ((length = fis.read(bytes)) >= 0) {
+                    zipOut.write(bytes, 0, length);
+                }
+                fis.close();
             }
+            zipOut.close();
+            fos.close();
+        } catch (Exception e) {
 
-            zos.close();
-
-        } catch (FileNotFoundException ex) {
-            System.err.println("A file does not exist: " + ex);
-        } catch (IOException ex) {
-            System.err.println("I/O error: " + ex);
         }
     }
 
