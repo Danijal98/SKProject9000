@@ -10,7 +10,7 @@ public interface Connection {
 
     void addUser(String name, String password, UserPrivilege privilege);
 
-    void mkDir(String path, String dirName);
+    boolean mkDir(String[] paths);
 
     void mkFile(String path);
 

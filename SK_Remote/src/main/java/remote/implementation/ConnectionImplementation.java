@@ -20,8 +20,8 @@ public class ConnectionImplementation implements Connection {
 
     }
 
-    public void mkDir(String path, String dirName) {
-
+    public boolean mkDir(String[] paths) {
+        return true;
     }
 
     public void mkFile(String path) {

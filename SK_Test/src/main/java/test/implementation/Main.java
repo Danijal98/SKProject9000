@@ -58,16 +58,15 @@ public class Main {
             }
             try {
                 if (line.contains(" ")){
-                    //TODO ovo prebaciti na metodu doCommand da prima String... kao komandu i argumente pa tamo proveravati
                     parts = line.split("\\s+", 2);
                     command = parts[0];
                     arguments = parts[1];
                     if (!doCommand(connection, command, arguments)) {
-                        System.out.println("Unknown command!");
+                        System.out.println("Unknown command or missing arguments!");
                     }
                 }else{
                     if (!doCommand(connection, line, "")) {
-                        System.out.println("Unknown command!");
+                        System.out.println("Unknown command or missing arguments!");
                     }
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -108,8 +107,8 @@ public class Main {
                 System.out.println("This command is only for admin!");
                 return true;
             }
-            String[] parts = arguments.split(" ");
-            connection.mkDir(parts[0], parts[1]);
+            String[] parts = arguments.split(",");
+            if(!connection.mkDir(parts)) return false;
         } else if (command.equals("mkFile")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");

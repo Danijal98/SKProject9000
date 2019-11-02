@@ -8,8 +8,12 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ConnectionImplementation implements Connection {
 
@@ -151,13 +155,53 @@ public class ConnectionImplementation implements Connection {
         System.out.println("Done!");
     }
 
-    public void mkDir(String path, String dirName) {
-        // Tree
-        // /root/folder1/folder2/fajl
-        // /root/folder1/fajl
+    public boolean mkDir(String[] arguments) {
+        for (String p : arguments) {
+            String[] parts = p.split(" ");
+            String path = "";
+            String dirName = "";
+            if(parts.length>1){
+                path = parts[0];
+                dirName = parts[1];
+            }else{
+                dirName = parts[0];
+            }
+            if (dirName.contains("{") && dirName.contains("}")) {
+                String name = dirName.substring(0,dirName.indexOf("{"));
+                String pom = dirName.substring(dirName.indexOf("{")+1,dirName.indexOf("}"));
+                String[] fromTo = pom.split("-");
+                int from = Integer.parseInt(fromTo[0]);
+                int to = Integer.parseInt(fromTo[1]);
+                for (int i = from;i<=to;i++){
+                    File file = new File(this.path + path + File.separator + name + i);
+                    if (!file.exists()) {
+                        if (file.mkdirs()) {
+                            System.out.println("Directory created!");
+                        } else {
+                            System.out.println("Error!");
+                        }
+                    } else {
+                        System.out.println("Directory at this location already exist: " + path);
+                    }
+                }
+            } else {
+                File file = new File(this.path + path + File.separator + dirName);
+                if (!file.exists()) {
+                    if (file.mkdirs()) {
+                        System.out.println("Directory created!");
+                    } else {
+                        System.out.println("Error!");
+                    }
+                } else {
+                    System.out.println("Directory at this location already exist: " + path);
+                }
+            }
+        }
+        return true;
     }
 
     public void mkFile(String path) {
+        //TODO prosledjeni path bi trebalo da se nalepi na this.path, korisnik ne sme da pravi van skladista
         if (!path.contains(this.path)) {
             System.out.println("Can't do that!");
             return;
@@ -338,7 +382,8 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
         at.addRule();
-        at.addRow("mkDir", "makes directory to the chosen path", "mkDir <path> <dirName>");
+        at.addRow("mkDir", "makes directory to the chosen path from storage root. If no directory is given, root is chosen", "mkDir <path> <dirName> |" +
+                                                                            "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
         at.addRule();
         at.addRow("mkFile", "makes file to the chosen path", "mkFile <path> <fileName>");
         at.addRule();
@@ -352,7 +397,7 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("addBlacklisted", "adds extension to a blacklist in this storage", "addBlacklisted <extension>");
         at.addRule();
-        at.addRow("removeBlacklisted", "removes extension from a blacklist in this storage", "removeBlacklisted extension");
+        at.addRow("removeBlacklisted", "removes extension from a blacklist in this storage", "removeBlacklisted <extension>");
         at.addRule();
         at.addRow("lsDir", "prints all files in given path (option for subdirectories)", "lsDir <path> <subdirectories(true/false)>");
         at.addRule();
@@ -371,4 +416,30 @@ public class ConnectionImplementation implements Connection {
                 }
             }
     }
+
+    private void zipFiles(String... filePaths) {
+        try {
+            File firstFile = new File(filePaths[0]);
+            String zipFileName = firstFile.getName().concat(".zip");
+
+            FileOutputStream fos = new FileOutputStream(zipFileName);
+            ZipOutputStream zos = new ZipOutputStream(fos);
+
+            for (String aFile : filePaths) {
+                zos.putNextEntry(new ZipEntry(new File(aFile).getName()));
+
+                byte[] bytes = Files.readAllBytes(Paths.get(aFile));
+                zos.write(bytes, 0, bytes.length);
+                zos.closeEntry();
+            }
+
+            zos.close();
+
+        } catch (FileNotFoundException ex) {
+            System.err.println("A file does not exist: " + ex);
+        } catch (IOException ex) {
+            System.err.println("I/O error: " + ex);
+        }
+    }
+
 }
