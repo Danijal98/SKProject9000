@@ -207,6 +207,18 @@ public class ConnectionImplementation implements Connection {
             return;
         }
         File file = new File(path);
+        String extension = "";
+
+        int i = file.getName().lastIndexOf('.');
+        int p = Math.max(file.getName().lastIndexOf('/'), file.getName().lastIndexOf('\\'));
+
+        if (i > p) {
+            extension = ".";
+            extension += file.getName().substring(i + 1);
+        }
+        if (isBlacklisted(extension)) {
+            return;
+        }
         if (file.exists()) {
             System.out.println("File already exists!");
             return;
@@ -337,15 +349,13 @@ public class ConnectionImplementation implements Connection {
                 FileReader fileReader = new FileReader(file);
                 JSONObject jsonObject = new JSONObject(new JSONTokener(fileReader));
                 JSONArray jsonArray = jsonObject.getJSONArray("blacklisted");
-                jsonArray.put(extension);
-                fileReader.close();
                 for (int i = 0; i < jsonArray.length(); i++) {
                     String ex = jsonArray.get(i).toString();
                     if (ex.equals(extension)) {
                         jsonArray.remove(i);
-                        return;
                     }
                 }
+                fileReader.close();
                 FileWriter fileWriter = new FileWriter(file, false);
                 fileWriter.write(jsonObject.toString());
                 fileWriter.close();
