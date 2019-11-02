@@ -143,6 +143,8 @@ public class Main {
             } else {
                 System.out.println("User is not logged in!");
             }
+        } else if(command.equals("help")){
+            connection.help();
         } else {
             return false;
         }

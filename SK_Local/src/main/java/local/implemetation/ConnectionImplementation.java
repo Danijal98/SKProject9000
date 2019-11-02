@@ -2,6 +2,7 @@ package local.implemetation;
 
 import api.documentation.Connection;
 import api.documentation.UserPrivilege;
+import de.vandermeer.asciitable.AsciiTable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -322,6 +323,41 @@ public class ConnectionImplementation implements Connection {
                 continue;
             System.out.println(files.get(i).getName());
         }
+    }
+
+    public void help() {
+        AsciiTable at = new AsciiTable();
+        at.addRule();
+        at.addRow("FUNCTION", "DESCRIPTION", "ARGUMENTS");
+        at.addRule();
+        at.addRow("upload", "upload - ", "");
+        at.addRule();
+        at.addRow("download", "download - ", "");
+        at.addRule();
+        at.addRow("set_meta", "sets meta data to a chosen file", "set_meta <path> <key value>");
+        at.addRule();
+        at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
+        at.addRule();
+        at.addRow("mkDir", "makes directory to the chosen path", "mkDir <path> <dirName>");
+        at.addRule();
+        at.addRow("mkFile", "makes file to the chosen path", "mkFile <path> <fileName>");
+        at.addRule();
+        at.addRow("deleteItem", "deletes item at a chosen path", "deleteItem <path> <fileName>");
+        at.addRule();
+        at.addRow("isLoggedIn", "checks if user is logged in", "No arguments needed");
+        at.addRule();
+        at.addRow("isAdmin", "checks if current user is admin", "No arguments needed");
+        at.addRule();
+        at.addRow("isBlacklisted", "checks if given extension is blacklisted in this storage", "isBlacklisted <extension>");
+        at.addRule();
+        at.addRow("addBlacklisted", "adds extension to a blacklist in this storage", "addBlacklisted <extension>");
+        at.addRule();
+        at.addRow("removeBlacklisted", "removes extension from a blacklist in this storage", "removeBlacklisted extension");
+        at.addRule();
+        at.addRow("lsDir", "prints all files in given path (option for subdirectories)", "lsDir <path> <subdirectories(true/false)>");
+        at.addRule();
+        String rend = at.render(200);
+        System.out.println(rend);
     }
 
     private void getFiles(String directoryName, List<File> files, boolean subdirectories) {

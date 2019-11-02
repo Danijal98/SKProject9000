@@ -31,4 +31,6 @@ public interface Connection {
     //Change privileges (Username, privilege type)
 
     //Display help
+    void help();
+
 }

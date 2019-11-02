@@ -55,4 +55,8 @@ public class ConnectionImplementation implements Connection {
     public void lsDir(String path, boolean subdirectories) {
 
     }
+
+    public void help() {
+
+    }
 }
