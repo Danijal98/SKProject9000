@@ -41,7 +41,7 @@ public class Main {
             try {
                 connection = manager.connect(path, un_pass[0], un_pass[1]);
                 if (connection.isLoggedIn()) break;
-            }catch (IndexOutOfBoundsException e){
+            } catch (IndexOutOfBoundsException e) {
                 System.out.println("Oops you didn't give enough arguments.");
             }
         }
@@ -57,14 +57,14 @@ public class Main {
                 break;
             }
             try {
-                if (line.contains(" ")){
+                if (line.contains(" ")) {
                     parts = line.split("\\s+", 2);
                     command = parts[0];
                     arguments = parts[1];
                     if (!doCommand(connection, command, arguments)) {
                         System.out.println("Unknown command or missing arguments!");
                     }
-                }else{
+                } else {
                     if (!doCommand(connection, line, "")) {
                         System.out.println("Unknown command or missing arguments!");
                     }
@@ -108,7 +108,7 @@ public class Main {
                 return true;
             }
             String[] parts = arguments.split(",");
-            if(!connection.mkDir(parts)) return false;
+            if (!connection.mkDir(parts)) return false;
         } else if (command.equals("mkFile")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
@@ -129,7 +129,12 @@ public class Main {
             connection.removeBlacklisted(arguments);
         } else if (command.equals("lsDir")) {
             String[] parts = arguments.split(" ");
-            connection.lsDir(parts[0], toBoolean(parts[1]));
+            String arg = "";
+            for (int i = 0; i < parts.length - 1; i++) {
+                arg += parts[i];
+                if (parts.length - 1 > i + 1) arg += " ";
+            }
+            connection.lsDir(arg, toBoolean(parts[parts.length - 1]));
         } else if (command.equals("isAdmin")) {
             if (connection.isAdmin()) {
                 System.out.println("User is admin!");
@@ -142,7 +147,7 @@ public class Main {
             } else {
                 System.out.println("User is not logged in!");
             }
-        } else if(command.equals("help")){
+        } else if (command.equals("help")) {
             connection.help();
         } else {
             return false;

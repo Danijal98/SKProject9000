@@ -23,8 +23,11 @@ public class ConnectionImplementation implements Connection {
 
     ConnectionImplementation(String path, String user, String password) {
         this.path = path;
+        File dir = new File(this.path);
         File file = new File(this.path + File.separator + "users.json");
-        if (!file.exists()) {
+        if (!dir.exists()) {
+            String str = "";
+            mkDir(str.split(""));
             addUser(user, password, UserPrivilege.ADMIN);
             file = new File(this.path + File.separator + "users.json");
         }
@@ -59,12 +62,8 @@ public class ConnectionImplementation implements Connection {
     }
 
     public boolean download(String path) {
-        if (!path.contains(this.path)) {
-            System.out.println("Can't download from there.");
-            return false;
-        }
         String home = System.getProperty("user.home");
-        File source = new File(path);
+        File source = new File(this.path + File.separator + path);
         File dest = new File(home + File.separator + "Downloads" + File.separator + source.getName());
         if (downloadDir(source, dest)) {
             System.out.println("Done!");
@@ -160,19 +159,19 @@ public class ConnectionImplementation implements Connection {
             String[] parts = p.split(" ");
             String path = "";
             String dirName = "";
-            if(parts.length>1){
+            if (parts.length > 1) {
                 path = parts[0];
                 dirName = parts[1];
-            }else{
+            } else {
                 dirName = parts[0];
             }
             if (dirName.contains("{") && dirName.contains("}")) {
-                String name = dirName.substring(0,dirName.indexOf("{"));
-                String pom = dirName.substring(dirName.indexOf("{")+1,dirName.indexOf("}"));
+                String name = dirName.substring(0, dirName.indexOf("{"));
+                String pom = dirName.substring(dirName.indexOf("{") + 1, dirName.indexOf("}"));
                 String[] fromTo = pom.split("-");
                 int from = Integer.parseInt(fromTo[0]);
                 int to = Integer.parseInt(fromTo[1]);
-                for (int i = from;i<=to;i++){
+                for (int i = from; i <= to; i++) {
                     File file = new File(this.path + path + File.separator + name + i);
                     if (!file.exists()) {
                         if (file.mkdirs()) {
@@ -201,12 +200,7 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void mkFile(String path) {
-        //TODO prosledjeni path bi trebalo da se nalepi na this.path, korisnik ne sme da pravi van skladista
-        if (!path.contains(this.path)) {
-            System.out.println("Can't do that!");
-            return;
-        }
-        File file = new File(path);
+        File file = new File(this.path + File.separator + path);
         String extension = "";
 
         int i = file.getName().lastIndexOf('.');
@@ -230,18 +224,17 @@ public class ConnectionImplementation implements Connection {
                 System.out.println("Something went wrong...");
             }
         } catch (IOException e) {
-            e.printStackTrace();
             System.out.println("Something went in and out and really bad.");
         }
     }
 
     public void deleteItem(String path) {
         File file = new File(path);
-        if (!path.contains(this.path) || currentPrivilege.equals(UserPrivilege.GUEST) || file.getName().equals("users.json") || file.getName().equals("blacklisted.json") || currentPrivilege.equals(UserPrivilege.GUEST)) {
+        if (currentPrivilege.equals(UserPrivilege.GUEST) || file.getName().equals("users.json") || file.getName().equals("blacklisted.json") || currentPrivilege.equals(UserPrivilege.GUEST)) {
             System.out.println("Can't do that");
             return;
         }
-        if (deleteFolder(path)) {
+        if (deleteFolder(this.path + File.separator + path)) {
             System.out.println("Done!");
         } else {
             System.out.println("Something went wrong.");
@@ -366,14 +359,14 @@ public class ConnectionImplementation implements Connection {
         }
     }
 
-    public void lsDir(String path, boolean subdirectories) { //da se doda da prikaze i za poddirektorijum
+    public void lsDir(String path, boolean subdirectories) {
         if (path.equals("")) {
             path = this.path;
         }
         List<File> files = new ArrayList<File>();
-        getFiles(path, files, subdirectories);
+        getFiles(this.path + File.separator + path, files, subdirectories);
         for (int i = 0; i < files.size(); i++) {
-            if (files.get(i).toString().equals("users.json") || files.get(i).toString().equals("blacklisted.json"))
+            if (files.get(i).getName().equals("users.json") || files.get(i).getName().equals("blacklisted.json"))
                 continue;
             System.out.println(files.get(i).getName());
         }
@@ -393,7 +386,7 @@ public class ConnectionImplementation implements Connection {
         at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
         at.addRule();
         at.addRow("mkDir", "makes directory to the chosen path from storage root. If no directory is given, root is chosen", "mkDir <path> <dirName> |" +
-                                                                            "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
+                "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
         at.addRule();
         at.addRow("mkFile", "makes file to the chosen path", "mkFile <path> <fileName>");
         at.addRule();
@@ -422,7 +415,7 @@ public class ConnectionImplementation implements Connection {
             for (File file : fileList) {
                 files.add(file);
                 if (file.isDirectory() && subdirectories) {
-                    getFiles(file.getAbsolutePath(), files, true);
+                    getFiles(file.getAbsolutePath(), files, subdirectories);
                 }
             }
     }
