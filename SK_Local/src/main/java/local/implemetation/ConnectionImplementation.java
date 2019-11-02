@@ -172,7 +172,7 @@ public class ConnectionImplementation implements Connection {
                 int from = Integer.parseInt(fromTo[0]);
                 int to = Integer.parseInt(fromTo[1]);
                 for (int i = from; i <= to; i++) {
-                    File file = new File(this.path + path + File.separator + name + i);
+                    File file = new File(this.path + File.separator + path + File.separator + name + i);
                     if (!file.exists()) {
                         if (file.mkdirs()) {
                             System.out.println("Directory created!");
@@ -184,7 +184,7 @@ public class ConnectionImplementation implements Connection {
                     }
                 }
             } else {
-                File file = new File(this.path + path + File.separator + dirName);
+                File file = new File(this.path + File.separator + path + File.separator + dirName);
                 if (!file.exists()) {
                     if (file.mkdirs()) {
                         System.out.println("Directory created!");
@@ -284,6 +284,7 @@ public class ConnectionImplementation implements Connection {
     public boolean isBlacklisted(String extension) {
         File file = new File(this.path + File.separator + "blacklisted.json");
         if (!file.exists()) {
+            System.out.println(extension + " is not blacklisted.");
             return false;
         }
         FileReader fileReader = null;
@@ -386,7 +387,7 @@ public class ConnectionImplementation implements Connection {
         at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
         at.addRule();
         at.addRow("mkDir", "makes directory to the chosen path from storage root. If no directory is given, root is chosen", "mkDir <path> <dirName> |" +
-                "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
+                                                                            "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
         at.addRule();
         at.addRow("mkFile", "makes file to the chosen path", "mkFile <path> <fileName>");
         at.addRule();
@@ -396,16 +397,21 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("isAdmin", "checks if current user is admin", "No arguments needed");
         at.addRule();
-        at.addRow("isBlacklisted", "checks if given extension is blacklisted in this storage", "isBlacklisted <extension>");
+        at.addRow("isBlacklisted", "checks if given extension is blacklisted in this storage", "isBlacklisted <extension(.exe)>");
         at.addRule();
-        at.addRow("addBlacklisted", "adds extension to a blacklist in this storage", "addBlacklisted <extension>");
+        at.addRow("addBlacklisted", "adds extension to a blacklist in this storage", "addBlacklisted <extension(.exe)>");
         at.addRule();
-        at.addRow("removeBlacklisted", "removes extension from a blacklist in this storage", "removeBlacklisted <extension>");
+        at.addRow("removeBlacklisted", "removes extension from a blacklist in this storage", "removeBlacklisted <extension(.exe)>");
         at.addRule();
         at.addRow("lsDir", "prints all files in given path (option for subdirectories)", "lsDir <path> <subdirectories(true/false)>");
         at.addRule();
         String rend = at.render(200);
         System.out.println(rend);
+    }
+
+    public void clearScreen() {
+        for(int i=0;i<50;i++)
+            System.out.println();
     }
 
     private void getFiles(String directoryName, List<File> files, boolean subdirectories) {
@@ -415,7 +421,7 @@ public class ConnectionImplementation implements Connection {
             for (File file : fileList) {
                 files.add(file);
                 if (file.isDirectory() && subdirectories) {
-                    getFiles(file.getAbsolutePath(), files, subdirectories);
+                    getFiles(file.getAbsolutePath(), files, true);
                 }
             }
     }

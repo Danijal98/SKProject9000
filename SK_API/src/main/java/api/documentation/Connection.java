@@ -28,6 +28,7 @@ public interface Connection {
 
     void lsDir(String path, boolean subdirectories);
 
+    void clearScreen();
     //Change privileges (Username, privilege type)
 
     //Display help

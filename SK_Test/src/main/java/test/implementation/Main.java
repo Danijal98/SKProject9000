@@ -18,6 +18,7 @@ public class Main {
         //Local or Remote
         while (true) {
             System.out.println("Connect to local or remote storage (local/remote)");
+            typePointer();
             type = sc.nextLine();
             if (type.equals("local")) {
                 manager = local.implemetation.ManagerImplementation.getInstance();
@@ -33,10 +34,12 @@ public class Main {
         }
         //Input root path, username and path
         System.out.println("Input root path!");
+        typePointer();
         path = sc.nextLine();
         Connection connection = null;
         while (true) {
             System.out.println("Input username and password divided with space (ex. admin 123)");
+            typePointer();
             un_pass = sc.nextLine().split(" ");
             try {
                 connection = manager.connect(path, un_pass[0], un_pass[1]);
@@ -46,12 +49,14 @@ public class Main {
             }
         }
         System.out.println("You are ready to go! If you need help just type \"help\" command to display all commands\n" +
-                "Or \"help\" <command> to see what that command does.\nType \"exit\" to close the program");
+                "Or \"help\" <command> to see what that command does. If help looks funny just adjust the width of your console or go fullscreen!\n" +
+                "Type \"exit\" to close the program");
         while (true) {
             String command;
             String arguments;
             String line;
             String[] parts = null;
+            typePointer();
             line = sc.nextLine();
             if (line.equalsIgnoreCase("exit")) {
                 break;
@@ -149,6 +154,8 @@ public class Main {
             }
         } else if (command.equals("help")) {
             connection.help();
+        } else if (command.equals("clear")) {
+           // connection.clearScreen();
         } else {
             return false;
         }
@@ -158,6 +165,10 @@ public class Main {
     private static boolean toBoolean(String string) {
         if (string.equals("true")) return true;
         return false;
+    }
+
+    private static void typePointer() {
+        System.out.print(">>> ");
     }
 
 }
