@@ -15,67 +15,73 @@ public class Main {
         String[] un_pass;
         Scanner sc = new Scanner(System.in);
 
-        //Local or Remote
-        while (true) {
-            System.out.println("Connect to local or remote storage (local/remote)");
-            typePointer();
-            type = sc.nextLine();
-            if (type.equals("local")) {
-                manager = local.implemetation.ManagerImplementation.getInstance();
-                System.out.println("Connected to local storage!");
-                break;
-            } else if (type.equals("remote")) {
-                manager = remote.implementation.ManagerImplementation.getInstance();
-                System.out.println("Connected to remote storage!");
-                break;
-            } else {
-                System.out.println("Unknown command!");
-            }
-        }
-        //Input root path, username and path
-        System.out.println("Input root path!");
-        typePointer();
-        path = sc.nextLine();
-        Connection connection = null;
-        while (true) {
-            System.out.println("Input username and password divided with space (ex. admin 123)");
-            typePointer();
-            un_pass = sc.nextLine().split(" ");
-            try {
-                connection = manager.connect(path, un_pass[0], un_pass[1]);
-                if (connection.isLoggedIn()) break;
-            } catch (IndexOutOfBoundsException e) {
-                System.out.println("Oops you didn't give enough arguments.");
-            }
-        }
-        System.out.println("You are ready to go! If you need help just type \"help\" command to display all commands\n" +
-                "Or \"help\" <command> to see what that command does. If help looks funny just adjust the width of your console or go fullscreen!\n" +
-                "Type \"exit\" to close the program");
-        while (true) {
-            String command;
-            String arguments;
-            String line;
-            String[] parts = null;
-            typePointer();
-            line = sc.nextLine();
-            if (line.equalsIgnoreCase("exit")) {
-                break;
-            }
-            try {
-                if (line.contains(" ")) {
-                    parts = line.split("\\s+", 2);
-                    command = parts[0];
-                    arguments = parts[1];
-                    if (!doCommand(connection, command, arguments)) {
-                        System.out.println("Unknown command or missing arguments!");
-                    }
+        //main loop
+        while(true){
+            //Local or Remote
+            while (true) {
+                System.out.println("Connect to local or remote storage (local/remote)");
+                typePointer();
+                type = sc.nextLine();
+                if (type.equals("local")) {
+                    manager = local.implemetation.ManagerImplementation.getInstance();
+                    System.out.println("Connected to local storage!");
+                    break;
+                } else if (type.equals("remote")) {
+                    manager = remote.implementation.ManagerImplementation.getInstance();
+                    System.out.println("Connected to remote storage!");
+                    break;
                 } else {
-                    if (!doCommand(connection, line, "")) {
-                        System.out.println("Unknown command or missing arguments!");
-                    }
+                    System.out.println("Unknown command!");
                 }
-            } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("Oops you didn't give enough arguments.");
+            }
+            //Input root path, username and path
+            System.out.println("Input root path!");
+            typePointer();
+            path = sc.nextLine();
+            Connection connection = null;
+            while (true) {
+                System.out.println("Input username and password divided with space (ex. admin 123)");
+                typePointer();
+                un_pass = sc.nextLine().split(" ");
+                try {
+                    connection = manager.connect(path, un_pass[0], un_pass[1]);
+                    if (connection.isLoggedIn()) break;
+                } catch (IndexOutOfBoundsException e) {
+                    System.out.println("Oops you didn't give enough arguments.");
+                }
+            }
+            System.out.println("You are ready to go! If you need help just type \"help\" command to display all commands\n"
+                    + "If help looks funny just adjust the width of your console or go fullscreen!\n" +
+                    "Type \"exit\" to close the program");
+            while (true) {
+                String command;
+                String arguments;
+                String line;
+                String[] parts = null;
+                typePointer();
+                line = sc.nextLine();
+                if (line.equalsIgnoreCase("exit")) {
+                    return;
+                }
+                if(line.equalsIgnoreCase("disconnect")){
+                    break;
+                }
+                try {
+                    if (line.contains(" ")) {
+                        parts = line.split("\\s+", 2);
+                        command = parts[0];
+                        arguments = parts[1];
+                        if (!doCommand(connection, command, arguments)) {
+                            System.out.println("Unknown command or missing arguments!");
+                        }
+                    } else {
+                        if (!doCommand(connection, line, "")) {
+                            System.out.println("Unknown command or missing arguments!");
+                        }
+                    }
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Oops you didn't give enough arguments.");
+                }
             }
         }
     }

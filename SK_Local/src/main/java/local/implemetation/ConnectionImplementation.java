@@ -194,13 +194,14 @@ public class ConnectionImplementation implements Connection {
                 JSONObject jsonObject = array.getJSONObject(i);
                 if (jsonObject.has(key)) {
                     System.out.println(jsonObject.getString(key));
+                    fileReader.close();
+                    return;
                 }
             }
-            fileReader.close();
+            System.out.println("Nothing found with that key!");
         } catch (IOException e) {
 
         }
-
     }
 
     public void addUser(String name, String password, UserPrivilege privilege) {
@@ -481,18 +482,22 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("FUNCTION", "DESCRIPTION", "ARGUMENTS");
         at.addRule();
-        at.addRow("upload", "uploads chosen files/file to chosen destination", "upload <path>;<name(optional if zip)>;<path1>,<path2>");
+        at.addRow("upload", "uploads chosen files/file to chosen destination", "upload <destination path>;<name(optional if zip)>;<path1>,<path2>");
         at.addRule();
         at.addRow("download", "downloads files from chosen path to user.home", "download <path>");
         at.addRule();
+        at.addRow("search", "searches specific file", "search <file Name>");
+        at.addRule();
         at.addRow("addMeta", "adds meta data to a chosen file", "addMeta <path>;<key value>");
+        at.addRule();
+        at.addRow("getMeta","grabs the meta data from a chosen file","getMeta <path>;<key>");
         at.addRule();
         at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
         at.addRule();
         at.addRow("mkDir", "makes directory to the chosen path from storage root. If no directory is given, root is chosen", "mkDir <path> <dirName> |" +
                 "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
         at.addRule();
-        at.addRow("mkFile", "makes file to the chosen path", "mkFile <path> <fileName>");
+        at.addRow("mkFile", "makes file to the chosen path", "mkFile <path + fileName>");
         at.addRule();
         at.addRow("deleteItem", "deletes item at a chosen path", "deleteItem <path> <fileName>");
         at.addRule();
@@ -508,7 +513,11 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("lsDir", "prints all files in given path (option for subdirectories)", "lsDir <path> <subdirectories(true/false)> <only directories(true/false)>");
         at.addRule();
-        String rend = at.render(200);
+        at.addRow("disconnect", "disconnects user from storage", "No arguments needed");
+        at.addRule();
+        at.addRow("exit", "terminates program", "No arguments needed");
+        at.addRule();
+        String rend = at.render(150);
         System.out.println(rend);
     }
 
