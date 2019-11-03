@@ -8,8 +8,6 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -577,5 +575,4 @@ public class ConnectionImplementation implements Connection {
                 System.out.println(files.get(i).getPath().replace(this.path + File.separator + STORAGE + File.separator, ""));
         }
     }
-
 }
