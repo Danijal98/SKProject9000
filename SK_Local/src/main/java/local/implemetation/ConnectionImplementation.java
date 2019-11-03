@@ -72,6 +72,10 @@ public class ConnectionImplementation implements Connection {
             return upload(destination, createdName, paths);
         } else {
             File src = new File(paths[0]);
+            if (isBlacklisted(returnExtension(src))) {
+                System.out.println("File extension is blacklisted.");
+                return false;
+            }
             File dest = new File(this.path + File.separator + STORAGE + File.separator + destination + File.separator + src.getName());
             downloadDir(src, dest);
             return true;
@@ -295,18 +299,20 @@ public class ConnectionImplementation implements Connection {
         return true;
     }
 
-    public void mkFile(String path) {
-        File file = new File(this.path + File.separator + STORAGE + File.separator + path);
+    private String returnExtension(File file) {
         String extension = "";
-
         int i = file.getName().lastIndexOf('.');
         int p = Math.max(file.getName().lastIndexOf('/'), file.getName().lastIndexOf('\\'));
-
         if (i > p) {
             extension = ".";
             extension += file.getName().substring(i + 1);
         }
-        if (isBlacklisted(extension)) {
+        return extension;
+    }
+
+    public void mkFile(String path) {
+        File file = new File(this.path + File.separator + STORAGE + File.separator + path);
+        if (isBlacklisted(returnExtension(file))) {
             System.out.println("Extension is blacklisted.");
             return;
         }
@@ -526,9 +532,15 @@ public class ConnectionImplementation implements Connection {
     private void zipFiles(String... filePaths) {
         try {
             List<String> srcFiles = Arrays.asList(filePaths);
+            List<String> srcFiles2 = new ArrayList<String>();
+            for (int i = 0; i < srcFiles.size(); i++) {
+                if (!isBlacklisted(returnExtension(new File(srcFiles.get(i))))) {
+                    srcFiles2.add(srcFiles.get(i));
+                }
+            }
             FileOutputStream fos = new FileOutputStream(filePaths[0].concat(".zip"));
             ZipOutputStream zipOut = new ZipOutputStream(fos);
-            for (String srcFile : srcFiles) {
+            for (String srcFile : srcFiles2) {
                 File fileToZip = new File(srcFile);
                 FileInputStream fis = new FileInputStream(fileToZip);
                 ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
