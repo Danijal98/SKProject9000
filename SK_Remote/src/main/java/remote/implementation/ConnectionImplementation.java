@@ -61,7 +61,11 @@ public class ConnectionImplementation implements Connection {
 
     }
 
-    public void lsDir(String path, boolean subdirectories) {
+    public void Search(String fileName) {
+
+    }
+
+    public void lsDir(String path, boolean subdirectories, boolean isDir) {
 
     }
 

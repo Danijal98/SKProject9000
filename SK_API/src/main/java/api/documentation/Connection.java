@@ -30,7 +30,7 @@ public interface Connection {
 
     void removeBlacklisted(String extension);
 
-    void lsDir(String path, boolean subdirectories);
+    void lsDir(String path, boolean subdirectories, boolean isDir);
 
     void clearScreen();
     //Change privileges (Username, privilege type)
@@ -38,4 +38,5 @@ public interface Connection {
     //Display help
     void help();
 
+    void Search(String fileName);
 }

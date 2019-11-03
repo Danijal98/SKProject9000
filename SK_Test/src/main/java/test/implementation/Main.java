@@ -84,24 +84,25 @@ public class Main {
         if (command.equals("upload")) {
             if (!connection.isAdmin())
                 System.out.println("This command is only for admin!");
-            else{
+            else {
                 String[] parts = arguments.split(";", 3);
-                if(parts.length==2){
+                if (parts.length == 2) {
                     String[] paths = parts[1].split(",");
-                    connection.upload(parts[0],paths);
-                }else if(parts.length==3){
+                    connection.upload(parts[0], paths);
+                } else if (parts.length == 3) {
                     String[] paths = parts[2].split(",");
-                    connection.upload(parts[0],parts[1],paths);
+                    connection.upload(parts[0], parts[1], paths);
                 }
             }
         } else if (command.equals("download")) {
             connection.download(arguments);
         } else if (command.equals("addMeta")) {
-            String[] parts = arguments.split(" ",3);
-            connection.addMeta(parts[0], parts[1], parts[2]);
-        } else if(command.equals("getMeta")){
-            String[] parts = arguments.split(" ");
-            connection.getMeta(parts[0],parts[1]);
+            String[] parts = arguments.split(";", 2);
+            String[] args = parts[1].split(" ", 2);
+            connection.addMeta(parts[0], args[0], args[1]);
+        } else if (command.equals("getMeta")) {
+            String[] parts = arguments.split(";");
+            connection.getMeta(parts[0], parts[1]);
         } else if (command.equals("addUser")) {
             if (!connection.isAdmin()) {
                 System.out.println("This command is only for admin!");
@@ -138,7 +139,9 @@ public class Main {
             }
             connection.deleteItem(arguments);
         } else if (command.equals("isBlacklisted")) {
-            connection.isBlacklisted(arguments);
+            booleanOutput(connection.isBlacklisted(arguments));
+        } else if (command.equals("search")) {
+            connection.Search(arguments);
         } else if (command.equals("addBlacklisted")) {
             connection.addBlacklisted(arguments);
         } else if (command.equals("removeBlacklisted")) {
@@ -146,11 +149,11 @@ public class Main {
         } else if (command.equals("lsDir")) {
             String[] parts = arguments.split(" ");
             String arg = "";
-            for (int i = 0; i < parts.length - 1; i++) {
+            for (int i = 0; i < parts.length - 2; i++) {
                 arg += parts[i];
-                if (parts.length - 1 > i + 1) arg += " ";
+                if (parts.length - 2 > i + 1) arg += " ";
             }
-            connection.lsDir(arg, toBoolean(parts[parts.length - 1]));
+            connection.lsDir(arg, toBoolean(parts[parts.length - 2]), toBoolean(parts[parts.length - 1]));
         } else if (command.equals("isAdmin")) {
             if (connection.isAdmin()) {
                 System.out.println("User is admin!");
@@ -182,4 +185,11 @@ public class Main {
         System.out.print(">>> ");
     }
 
+    private static void booleanOutput(boolean b) {
+        if (b) {
+            System.out.println("true");
+        } else {
+            System.out.println("false");
+        }
+    }
 }

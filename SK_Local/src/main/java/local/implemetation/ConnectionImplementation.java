@@ -125,10 +125,9 @@ public class ConnectionImplementation implements Connection {
                 out.close();
             } catch (FileNotFoundException e) {
                 System.out.println("File not found!");
-                e.printStackTrace();
                 return false;
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Something went wrong: IO Exception");
                 return false;
             }
         }
@@ -140,8 +139,12 @@ public class ConnectionImplementation implements Connection {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(key, value);
-
-        File file = new File(this.path + File.separator + newPath);
+        File originalFile = new File(this.path + File.separator + STORAGE + File.separator + path);
+        if (!originalFile.exists()) {
+            System.out.println("File doesn't exist.");
+            return;
+        }
+        File file = new File(this.path + File.separator + newPath + ".json");
         file.getParentFile().mkdirs();
 
         if (file.exists()) {
@@ -177,7 +180,7 @@ public class ConnectionImplementation implements Connection {
     public void getMeta(String path, String key) {
         String newPath = META_STORAGE + File.separator + path;
 
-        File file = new File(this.path + File.separator + newPath);
+        File file = new File(this.path + File.separator + newPath + ".json");
         FileReader fileReader = null;
         try {
             fileReader = new FileReader(file);
@@ -209,13 +212,21 @@ public class ConnectionImplementation implements Connection {
                     fileReader = new FileReader(file);
                     JSONObject jsonObjectExisting = new JSONObject(new JSONTokener(fileReader));
                     JSONArray jsonArray = jsonObjectExisting.getJSONArray("users");
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsobj = jsonArray.getJSONObject(i);
+                        if (jsobj.getString("username").equals(name)) {
+                            fileReader.close();
+                            System.out.println("User already exist");
+                            return;
+                        }
+                    }
                     jsonArray.put(jsonObject);
                     fileReader.close();
                     FileWriter fileWriter = new FileWriter(file, false);
                     fileWriter.write(jsonObjectExisting.toString());
                     fileWriter.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("Something went wrong: IO Exception.");
                 }
             } else {
                 System.out.println("Sorry, you can't do that.");
@@ -233,7 +244,7 @@ public class ConnectionImplementation implements Connection {
                 fileWriter.write(jsonobj.toString());
                 fileWriter.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Something went wrong: IO Exception");
             }
         }
         System.out.println("User added!");
@@ -296,6 +307,7 @@ public class ConnectionImplementation implements Connection {
             extension += file.getName().substring(i + 1);
         }
         if (isBlacklisted(extension)) {
+            System.out.println("Extension is blacklisted.");
             return;
         }
         if (file.exists()) {
@@ -349,7 +361,7 @@ public class ConnectionImplementation implements Connection {
                 deleteFile(directory);
                 directory.delete();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Something went wrong: IO Exception");
                 return false;
             }
         }
@@ -369,7 +381,6 @@ public class ConnectionImplementation implements Connection {
     public boolean isBlacklisted(String extension) {
         File file = new File(this.path + File.separator + "blacklisted.json");
         if (!file.exists()) {
-            System.out.println(extension + " is not blacklisted.");
             return false;
         }
         FileReader fileReader = null;
@@ -380,14 +391,12 @@ public class ConnectionImplementation implements Connection {
             for (int i = 0; i < jsonArray.length(); i++) {
                 String ex = jsonArray.get(i).toString();
                 if (ex.equals(extension)) {
-                    System.out.println(extension + " is blacklisted.");
                     return true;
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("File not found!");
         }
-        System.out.println(extension + " is not blacklisted.");
         return false;
     }
 
@@ -404,7 +413,7 @@ public class ConnectionImplementation implements Connection {
                 fileWriter.write(jsonObject.toString());
                 fileWriter.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Something went wrong: IO Exception");
             }
         } else {
             FileWriter fileWriter = null;
@@ -415,7 +424,7 @@ public class ConnectionImplementation implements Connection {
                 fileWriter.write(jsonObject.toString());
                 fileWriter.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Something went wrong: IO Exception");
             }
         }
         System.out.println("Done!");
@@ -440,21 +449,24 @@ public class ConnectionImplementation implements Connection {
                 fileWriter.close();
                 System.out.println("Done!");
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Something went wrong: IO Exception");
             }
+        } else {
+            System.out.println("There are no blacklisted.");
         }
     }
 
-    public void lsDir(String path, boolean subdirectories) {
-        if (path.equals("")) {
-            path = this.path;
-        }
+    public void lsDir(String path, boolean subdirectories, boolean onlyDirs) {
         List<File> files = new ArrayList<File>();
         getFiles(this.path + File.separator + STORAGE + File.separator + path, files, subdirectories);
         for (int i = 0; i < files.size(); i++) {
-            if (files.get(i).getName().equals("users.json") || files.get(i).getName().equals("blacklisted.json"))
+            if (onlyDirs) {
+                if (files.get(i).isDirectory()) {
+                    System.out.println(files.get(i).getPath().replace(this.path + File.separator + STORAGE + File.separator, ""));
+                }
                 continue;
-            System.out.println(files.get(i).getName());
+            }
+            System.out.println(files.get(i).getPath().replace(this.path + File.separator + STORAGE + File.separator, ""));
         }
     }
 
@@ -467,7 +479,7 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("download", "downloads files from chosen path to user.home", "download <path>");
         at.addRule();
-        at.addRow("addMeta", "adds meta data to a chosen file", "addMeta <path> <key value>");
+        at.addRow("addMeta", "adds meta data to a chosen file", "addMeta <path>;<key value>");
         at.addRule();
         at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
         at.addRule();
@@ -488,7 +500,7 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("removeBlacklisted", "removes extension from a blacklist in this storage", "removeBlacklisted <extension(.exe)>");
         at.addRule();
-        at.addRow("lsDir", "prints all files in given path (option for subdirectories)", "lsDir <path> <subdirectories(true/false)>");
+        at.addRow("lsDir", "prints all files in given path (option for subdirectories)", "lsDir <path> <subdirectories(true/false)> <only directories(true/false)>");
         at.addRule();
         String rend = at.render(200);
         System.out.println(rend);
@@ -533,6 +545,15 @@ public class ConnectionImplementation implements Connection {
             fos.close();
         } catch (Exception e) {
 
+        }
+    }
+
+    public void Search(String fileName) {
+        List<File> files = new ArrayList<File>();
+        getFiles(this.path + File.separator + STORAGE, files, true);
+        for (int i = 0; i < files.size(); i++) {
+            if (files.get(i).getName().equals(fileName))
+                System.out.println(files.get(i).getPath().replace(this.path + File.separator + STORAGE + File.separator, ""));
         }
     }
 
