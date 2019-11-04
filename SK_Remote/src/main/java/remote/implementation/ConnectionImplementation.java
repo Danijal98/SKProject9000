@@ -9,7 +9,11 @@ import de.vandermeer.asciitable.AsciiTable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.io.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ConnectionImplementation implements Connection {
 
@@ -34,14 +38,61 @@ public class ConnectionImplementation implements Connection {
     }
 
     public boolean upload(String destination, String... paths) {
-        return false;
+        try {
+
+            if(destination.equals("/")){
+                destination = "";
+            }
+
+            if(paths.length > 1){
+                File pom = new File(paths[0]);
+                String createdName = pom.getName().substring(0,pom.getName().lastIndexOf("."));
+                return upload(destination,createdName,paths);
+            }else{
+                File file = new File(paths[0]);
+                InputStream inputStream = new FileInputStream(file);
+                client.files().uploadBuilder(destination + "/" + file.getName()).withMode(WriteMode.OVERWRITE).uploadAndFinish(inputStream);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 
     public boolean upload(String destination, String zipName, String... paths) {
-        return false;
+        try {
+            if(destination.equals("/")){
+                destination = "";
+            }
+            zipFiles(paths);
+            String originName = paths[0].substring(0,paths[0].lastIndexOf(".")) + ".zip";
+            File origin = new File(originName);
+            InputStream inputStream = new FileInputStream(origin);
+            client.files().uploadBuilder(destination + "/" + zipName + ".zip").withMode(WriteMode.OVERWRITE).uploadAndFinish(inputStream);
+            inputStream.close();
+            origin.delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Something went wrong...");
+        }
+        return true;
     }
 
     public boolean download(String path) {
+        try {
+            String home = System.getProperty("user.home");
+            String fileName;
+            if(path.charAt(0) != '/')
+                path = "/" + path;
+            fileName = path.substring(path.lastIndexOf("/")+1);
+            File file = new File(home + File.separator + fileName);
+            OutputStream outputStream = new FileOutputStream(file);
+            client.files().download(path).download(outputStream);
+            outputStream.close();
+            System.out.println("File " + fileName + " downloaded at this location: " + file.getPath());
+        } catch (Exception e) {
+            System.out.println("Something went wrong...");
+        }
         return false;
     }
 
@@ -250,6 +301,49 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         String rend = at.render(150);
         System.out.println(rend);
+    }
+
+    private String returnExtension(File file) {
+        String extension = "";
+        int i = file.getName().lastIndexOf('.');
+        int p = Math.max(file.getName().lastIndexOf('/'), file.getName().lastIndexOf('\\'));
+        if (i > p) {
+            extension = ".";
+            extension += file.getName().substring(i + 1);
+        }
+        return extension;
+    }
+
+    private void zipFiles(String... filePaths) {
+        try {
+            List<String> srcFiles = Arrays.asList(filePaths);
+            List<String> srcFiles2 = new ArrayList<String>();
+            for (int i = 0; i < srcFiles.size(); i++) {
+                if (!isBlacklisted(returnExtension(new File(srcFiles.get(i))))) {
+                    srcFiles2.add(srcFiles.get(i));
+                }
+            }
+            String zipName = filePaths[0].substring(0,filePaths[0].lastIndexOf(".")) + ".zip";
+            FileOutputStream fos = new FileOutputStream(zipName);
+            ZipOutputStream zipOut = new ZipOutputStream(fos);
+            for (String srcFile : srcFiles2) {
+                File fileToZip = new File(srcFile);
+                FileInputStream fis = new FileInputStream(fileToZip);
+                ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+                zipOut.putNextEntry(zipEntry);
+
+                byte[] bytes = new byte[1024];
+                int length;
+                while ((length = fis.read(bytes)) >= 0) {
+                    zipOut.write(bytes, 0, length);
+                }
+                fis.close();
+            }
+            zipOut.close();
+            fos.close();
+        } catch (Exception e) {
+
+        }
     }
 
     public void clearScreen() {

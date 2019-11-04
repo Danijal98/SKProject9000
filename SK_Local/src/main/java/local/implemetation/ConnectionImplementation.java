@@ -66,7 +66,7 @@ public class ConnectionImplementation implements Connection {
     public boolean upload(String destination, String[] paths) {
         if (paths.length > 1) {
             File pom = new File(paths[0]);
-            String createdName = pom.getName();
+            String createdName = pom.getName().substring(0,pom.getName().lastIndexOf("."));
             return upload(destination, createdName, paths);
         } else {
             File src = new File(paths[0]);
@@ -84,7 +84,8 @@ public class ConnectionImplementation implements Connection {
     public boolean upload(String destination, String zipName, String[] paths) {
         //Zipujemo sve, prebacimo taj zip u destination, obrisemo zip originalni
         zipFiles(paths);
-        File origin = new File(paths[0].concat(".zip"));
+        String originName = paths[0].substring(0,paths[0].lastIndexOf(".")) + ".zip";
+        File origin = new File(originName);
         File copy = new File(this.path + File.separator + STORAGE + File.separator + destination + File.separator + zipName + ".zip");
         downloadDir(origin, copy);
         origin.delete();
@@ -545,7 +546,8 @@ public class ConnectionImplementation implements Connection {
                     srcFiles2.add(srcFiles.get(i));
                 }
             }
-            FileOutputStream fos = new FileOutputStream(filePaths[0].concat(".zip"));
+            String zipName = filePaths[0].substring(0,filePaths[0].lastIndexOf(".")) + ".zip";
+            FileOutputStream fos = new FileOutputStream(zipName);
             ZipOutputStream zipOut = new ZipOutputStream(fos);
             for (String srcFile : srcFiles2) {
                 File fileToZip = new File(srcFile);
