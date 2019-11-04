@@ -4,9 +4,11 @@ import api.documentation.Connection;
 import api.documentation.UserPrivilege;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
-import com.dropbox.core.v2.files.ListFolderResult;
-import com.dropbox.core.v2.files.Metadata;
+import com.dropbox.core.v2.files.*;
 import de.vandermeer.asciitable.AsciiTable;
+
+import java.io.File;
+import java.util.List;
 
 public class ConnectionImplementation implements Connection {
 
@@ -103,16 +105,56 @@ public class ConnectionImplementation implements Connection {
         }
         */
         ListFolderResult result = null;
+//        SearchBuilder srcb;
+//        SearchMode mode = SearchMode.FILENAME;
+//        try {
+//            SearchResult results = client.files().
+//            List<SearchMatch> matches = results.getMatches();
+//            for (int i = 0; i < matches.size(); i++) {
+//                System.out.println(matches.get(i).toString());
+//            }
+//        } catch (DbxException e) {
+//            e.printStackTrace();
+//        }
+        if (path.equals(File.separator)) {
+            path = "";
+        }
         try {
-            result = client.files().listFolder("");
+            result = client.files().listFolder(path);
             while (true) {
                 for (Metadata metadata : result.getEntries()) {
-                    System.out.println(metadata.getPathLower());
+                    if (metadata instanceof FolderMetadata && subdirectories) {
+                        listDir((FolderMetadata) metadata, isDir);
+                    } else if (!isDir) {
+                        System.out.println(metadata.getPathLower());
+                    }
                 }
                 if (!result.getHasMore()) {
                     break;
                 }
-                //result = client.files().listFolderContinue(result.getCursor());
+                result = client.files().listFolderContinue(result.getCursor());
+            }
+        } catch (DbxException e) {
+            System.out.println("Something went wrong ¯\\_(ツ)_/¯ pls try again");
+        }
+    }
+
+    private void listDir(FolderMetadata metadata, boolean onlyDir) {
+        try {
+            System.out.println(metadata.getPathLower());
+            ListFolderResult result = client.files().listFolder(metadata.getPathLower());
+            while (true) {
+                for (Metadata md : result.getEntries()) {
+                    if (md instanceof FolderMetadata) {
+                        listDir((FolderMetadata) md, onlyDir);
+                    }
+                    if (!onlyDir && !(md instanceof FolderMetadata)) {
+                        System.out.println(md.getPathLower());
+                    }
+                }
+                if (!result.getHasMore()) {
+                    break;
+                }
             }
         } catch (DbxException e) {
             System.out.println("Something went wrong ¯\\_(ツ)_/¯ pls try again");
