@@ -23,6 +23,8 @@ import java.util.zip.ZipOutputStream;
 
 public class ConnectionImplementation implements Connection {
 
+    private final String STORAGE = "storage";
+    private final String META_STORAGE = "metaStorage";
     private String path;
     private String currentUser;
     // private String password;
@@ -47,7 +49,7 @@ public class ConnectionImplementation implements Connection {
         }
     }
 
-    public boolean upload(String destination, String... paths) {
+    public boolean upload(String destination, String... paths){
         try {
 
             if (destination.equals("/")) {
@@ -65,7 +67,7 @@ public class ConnectionImplementation implements Connection {
                 inputStream.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Something went wrong...");
         }
         return true;
     }
@@ -83,7 +85,6 @@ public class ConnectionImplementation implements Connection {
             inputStream.close();
             origin.delete();
         } catch (Exception e) {
-            e.printStackTrace();
             System.out.println("Something went wrong...");
         }
         return true;
@@ -101,18 +102,116 @@ public class ConnectionImplementation implements Connection {
             client.files().download(path).download(outputStream);
             outputStream.close();
             System.out.println("File " + fileName + " downloaded at this location: " + file.getPath());
+            return true;
         } catch (Exception e) {
             System.out.println("Something went wrong...");
+            return false;
         }
-        return false;
+    }
+
+    private boolean download(String path, boolean showPath){
+        try {
+            String home = System.getProperty("user.home");
+            String fileName;
+            if (path.charAt(0) != '/')
+                path = "/" + path;
+            fileName = path.substring(path.lastIndexOf("/") + 1);
+            File file = new File(home + File.separator + fileName);
+            OutputStream outputStream = new FileOutputStream(file);
+            client.files().download(path).download(outputStream);
+            outputStream.close();
+            if(showPath)
+                System.out.println("File " + fileName + " downloaded at this location: " + file.getPath());
+            return true;
+        } catch (Exception e) {
+            System.out.println("Something went wrong...");
+            return false;
+        }
     }
 
     public void addMeta(String path, String key, String value) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(key, value);
+        String pom = path.substring(path.lastIndexOf("/")+1);
+        String fileName = pom.substring(0,pom.lastIndexOf(".")) + ".json";
+        String home = System.getProperty("user.home");
+        String downloadedPath = home + File.separator + fileName;
+        File metaFile = new File(downloadedPath);
 
+        if(findIfFileExists(path)){
+            String metaPath = path.replace(STORAGE,META_STORAGE);
+            metaPath = metaPath.substring(0,metaPath.lastIndexOf(".")) + ".json";
+            System.out.println(metaPath);
+            if(findIfFileExists(metaPath)){
+                download(metaPath,false);
+                FileReader fileReader;
+                try {
+                    fileReader = new FileReader(downloadedPath);
+                    JSONObject jsonObjectExisting = new JSONObject(new JSONTokener(fileReader));
+                    JSONArray array = jsonObjectExisting.getJSONArray("meta");
+                    array.put(jsonObject);
+                    fileReader.close();
+                    FileWriter fileWriter = new FileWriter(metaFile, false);
+                    fileWriter.write(jsonObjectExisting.toString());
+                    fileWriter.close();
+                    metaPath = metaPath.substring(0,metaPath.lastIndexOf("/"));
+                    upload(metaPath, new String[]{metaFile.getPath()});
+                    metaFile.delete();
+                }catch (IOException e){
+                    System.out.println("Something went wrong: IO Exception");
+                }
+            }else{
+                FileWriter fileWriter;
+                try {
+                    metaFile.createNewFile();
+                    JSONObject mainJsn = new JSONObject();
+                    JSONArray jsonArray = new JSONArray();
+                    jsonArray.put(jsonObject);
+                    mainJsn.put("meta",jsonArray);
+                    fileWriter = new FileWriter(metaFile);
+                    fileWriter.write(mainJsn.toString());
+                    fileWriter.close();
+                    metaPath = metaPath.substring(0,metaPath.lastIndexOf("/"));
+                    upload(metaPath,new String[]{metaFile.getPath()});
+                    metaFile.delete();
+                } catch (IOException e) {
+                    System.out.println("Something went wrong: IO Exception");
+                }
+            }
+        }else{
+            System.out.println("File not found");
+        }
     }
 
     public void getMeta(String path, String key) {
-
+        String pom = path.substring(path.lastIndexOf("/")+1);
+        String fileName = pom.substring(0,pom.lastIndexOf(".")) + ".json";
+        String home = System.getProperty("user.home");
+        String downloadedPath = home + File.separator + fileName;
+        String metaPath = path.replace(STORAGE,META_STORAGE);
+        metaPath = metaPath.substring(0,metaPath.lastIndexOf(".")) + ".json";
+        if(download(metaPath,false)){
+            File metaFile = new File(downloadedPath);
+            FileReader fileReader;
+            try {
+                fileReader = new FileReader(metaFile);
+                JSONObject jsonObjectExisting = new JSONObject(new JSONTokener(fileReader));
+                JSONArray array = jsonObjectExisting.getJSONArray("meta");
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject jsonObject = array.getJSONObject(i);
+                    if (jsonObject.has(key)) {
+                        System.out.println(jsonObject.getString(key));
+                        break;
+                    }
+                }
+                fileReader.close();
+            }catch (IOException e){
+                System.out.println("Something went wrong...");
+            }
+            metaFile.delete();
+        }else{
+            System.out.println("Something went very wrong, hmm...");
+        }
     }
 
     public void addUser(String name, String password, UserPrivilege privilege) {
@@ -123,7 +222,7 @@ public class ConnectionImplementation implements Connection {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("username", name);
         jsonObject.put("password", password);
-        download("/users.json");
+        download("/users.json",false);
         String home = System.getProperty("user.home");
         File file = new File(home + File.separator + "users.json");
         if (file.exists()) {
@@ -224,6 +323,31 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void mkFile(String path) {
+        String home = System.getProperty("user.home");
+        String fileName = path.substring(path.lastIndexOf("/")+1);
+        path = path.replace(path.substring(path.lastIndexOf("/")),"");
+        File file = new File(home + File.separator + fileName);
+        /*
+        if(Search(fileName)){
+            System.out.println("File already exists!");
+            return;
+        }
+         */
+        if (isBlacklisted(returnExtension(file))) {
+            System.out.println("Extension is blacklisted.");
+            return;
+        }
+        try {
+            if (file.createNewFile()) {
+                upload(path,new String[]{file.getPath()});
+                file.delete();
+                System.out.println("File is created.");
+            } else {
+                System.out.println("Something went wrong...");
+            }
+        } catch (IOException e) {
+            System.out.println("Something went in and out and really bad.");
+        }
     }
 
     public void deleteItem(String path) {
@@ -252,7 +376,7 @@ public class ConnectionImplementation implements Connection {
         if (!findIfFileExists("/blacklisted.json")) {
             return false;
         }
-        download("/blacklisted.json");
+        download("/blacklisted.json",false);
         String home = System.getProperty("user.home");
         File file = new File(home + File.separator + "blacklisted.json");
         FileReader fileReader = null;
@@ -281,7 +405,7 @@ public class ConnectionImplementation implements Connection {
     public void addBlacklisted(String extension) {
         File file = null;
         if (findIfFileExists("/blacklisted.json")) {
-            download("/blacklisted.json");
+            download("/blacklisted.json",false);
             String home = System.getProperty("user.home");
             file = new File(home + File.separator + "blacklisted.json");
             try {
@@ -321,7 +445,7 @@ public class ConnectionImplementation implements Connection {
 
     public void removeBlacklisted(String extension) {
         if (findIfFileExists("/blacklisted.json")) {
-            download("/blacklisted.json");
+            download("/blacklisted.json",false);
             String home = System.getProperty("user.home");
             File file = new File(home + File.separator + "blacklisted.json");
             try {
@@ -369,7 +493,7 @@ public class ConnectionImplementation implements Connection {
     private boolean findIfFileExists(String path) {
         try {
             Metadata result = client.files().getMetadata(path);
-            if (result.getPathLower().equals(path))
+            if (result.getPathDisplay().equals(path))
                 return true;
         } catch (DbxException e) {
             return false;
@@ -381,17 +505,6 @@ public class ConnectionImplementation implements Connection {
 
     public void lsDir(String path, boolean subdirectories, boolean isDir) {
         ListFolderResult result = null;
-//        SearchBuilder srcb;
-//        SearchMode mode = SearchMode.FILENAME;
-//        try {
-//            SearchResult results = client.files().
-//            List<SearchMatch> matches = results.getMatches();
-//            for (int i = 0; i < matches.size(); i++) {
-//                System.out.println(matches.get(i).toString());
-//            }
-//        } catch (DbxException e) {
-//            e.printStackTrace();
-//        }
         if (path.equals("/")) {
             path = "";
         }
