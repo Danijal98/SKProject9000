@@ -6,8 +6,14 @@ import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.*;
 import de.vandermeer.asciitable.AsciiTable;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +25,7 @@ public class ConnectionImplementation implements Connection {
 
     private String path;
     private String currentUser;
-    private String password;
+    // private String password;
     private DbxClientV2 client;
     private UserPrivilege currentPrivilege;
 
@@ -27,31 +33,36 @@ public class ConnectionImplementation implements Connection {
     public ConnectionImplementation(String path, String currentUser, String password) {
         this.path = path;
         this.currentUser = currentUser;
-        this.password = password;
+        //this.password = password;
     }
 
     public ConnectionImplementation(String path, String currentUser, String password, DbxClientV2 client) {
         this.path = path;
         this.currentUser = currentUser;
-        this.password = password;
+        //this.password = password;
         this.client = client;
+        this.currentPrivilege = UserPrivilege.ADMIN;
+        if (!findIfFileExists("/users.json")) {
+            addUser(this.currentUser, password, this.currentPrivilege);
+        }
     }
 
     public boolean upload(String destination, String... paths) {
         try {
 
-            if(destination.equals("/")){
+            if (destination.equals("/")) {
                 destination = "";
             }
 
-            if(paths.length > 1){
+            if (paths.length > 1) {
                 File pom = new File(paths[0]);
-                String createdName = pom.getName().substring(0,pom.getName().lastIndexOf("."));
-                return upload(destination,createdName,paths);
-            }else{
+                String createdName = pom.getName().substring(0, pom.getName().lastIndexOf("."));
+                return upload(destination, createdName, paths);
+            } else {
                 File file = new File(paths[0]);
                 InputStream inputStream = new FileInputStream(file);
                 client.files().uploadBuilder(destination + "/" + file.getName()).withMode(WriteMode.OVERWRITE).uploadAndFinish(inputStream);
+                inputStream.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -61,11 +72,11 @@ public class ConnectionImplementation implements Connection {
 
     public boolean upload(String destination, String zipName, String... paths) {
         try {
-            if(destination.equals("/")){
+            if (destination.equals("/")) {
                 destination = "";
             }
             zipFiles(paths);
-            String originName = paths[0].substring(0,paths[0].lastIndexOf(".")) + ".zip";
+            String originName = paths[0].substring(0, paths[0].lastIndexOf(".")) + ".zip";
             File origin = new File(originName);
             InputStream inputStream = new FileInputStream(origin);
             client.files().uploadBuilder(destination + "/" + zipName + ".zip").withMode(WriteMode.OVERWRITE).uploadAndFinish(inputStream);
@@ -82,9 +93,9 @@ public class ConnectionImplementation implements Connection {
         try {
             String home = System.getProperty("user.home");
             String fileName;
-            if(path.charAt(0) != '/')
+            if (path.charAt(0) != '/')
                 path = "/" + path;
-            fileName = path.substring(path.lastIndexOf("/")+1);
+            fileName = path.substring(path.lastIndexOf("/") + 1);
             File file = new File(home + File.separator + fileName);
             OutputStream outputStream = new FileOutputStream(file);
             client.files().download(path).download(outputStream);
@@ -105,7 +116,72 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addUser(String name, String password, UserPrivilege privilege) {
+        if (!findIfFileExists("/users.json")) {
+            addFirstUser(name, password, privilege);
+            return;
+        }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("username", name);
+        jsonObject.put("password", password);
+        download("/users.json");
+        String home = System.getProperty("user.home");
+        File file = new File(home + File.separator + "users.json");
+        if (file.exists()) {
+            jsonObject.put("privilege", privilege);
+            FileReader fileReader = null;
+            try {
+                fileReader = new FileReader(file);
+                JSONObject jsonObjectExisting = new JSONObject(new JSONTokener(fileReader));
+                JSONArray jsonArray = jsonObjectExisting.getJSONArray("users");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject jsobj = jsonArray.getJSONObject(i);
+                    if (jsobj.getString("username").equals(name)) {
+                        fileReader.close();
+                        System.out.println("User already exist");
+                        file.delete();
+                        return;
+                    }
+                }
+                jsonArray.put(jsonObject);
+                fileReader.close();
+                FileWriter fileWriter = new FileWriter(file, false);
+                fileWriter.write(jsonObjectExisting.toString());
+                fileWriter.close();
+            } catch (IOException e) {
+                System.out.println("Something went wrong: IO Exception.");
+                file.delete();
+                return;
+            }
+        } else System.out.println("File doesn't exist?");
+        upload("", new String[]{file.getAbsolutePath()});
+        System.out.println("User added!");
+        file.delete();
+    }
 
+    private void addFirstUser(String name, String password, UserPrivilege privilege) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("username", name);
+        jsonObject.put("password", password);
+        String home = System.getProperty("user.home");
+        File file = new File(home + File.separator + "users.json");
+        jsonObject.put("privilege", UserPrivilege.ADMIN);
+        FileWriter fileWriter = null;
+        try {
+            JSONObject jsonobj = new JSONObject();
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.put(jsonObject);
+            jsonobj.put("users", jsonArray);
+            fileWriter = new FileWriter(file);
+            fileWriter.write(jsonobj.toString());
+            fileWriter.close();
+        } catch (IOException e) {
+            System.out.println("Something went wrong: IO Exception");
+            file.delete();
+            return;
+        }
+        upload("", new String[]{file.getAbsolutePath()});
+        System.out.println("User added!");
+        file.delete();
     }
 
     public boolean mkDir(String[] arguments) {
@@ -156,7 +232,6 @@ public class ConnectionImplementation implements Connection {
             if (path.equals(deleteResult.getMetadata().getPathLower())) {
                 System.out.println("Done!");
             }
-            System.out.println(deleteResult.getMetadata().getPathLower());
         } catch (DbxException e) {
             System.out.println("Something went wrong.");
         }
@@ -169,20 +244,110 @@ public class ConnectionImplementation implements Connection {
     }
 
     public boolean isAdmin() {
-        //  if (currentPrivilege.equals(UserPrivilege.ADMIN)) return true;
-        return true;
+        if (currentPrivilege.equals(UserPrivilege.ADMIN)) return true;
+        return false;
     }
 
     public boolean isBlacklisted(String extension) {
+        if (!findIfFileExists("/blacklisted.json")) {
+            return false;
+        }
+        download("/blacklisted.json");
+        String home = System.getProperty("user.home");
+        File file = new File(home + File.separator + "blacklisted.json");
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(file);
+            JSONObject jsonObject = new JSONObject(new JSONTokener(fileReader));
+            JSONArray jsonArray = jsonObject.getJSONArray("blacklisted");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                String ex = jsonArray.get(i).toString();
+                if (ex.equals(extension)) {
+                    fileReader.close();
+                    file.delete();
+                    return true;
+                }
+            }
+            fileReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found!");
+        } catch (IOException e) {
+            System.out.println("Something went wrong: IO Exception");
+        }
+        file.delete();
         return false;
     }
 
     public void addBlacklisted(String extension) {
-
+        File file = null;
+        if (findIfFileExists("/blacklisted.json")) {
+            download("/blacklisted.json");
+            String home = System.getProperty("user.home");
+            file = new File(home + File.separator + "blacklisted.json");
+            try {
+                FileReader fileReader = new FileReader(file);
+                JSONObject jsonObject = new JSONObject(new JSONTokener(fileReader));
+                JSONArray jsonArray = jsonObject.getJSONArray("blacklisted");
+                jsonArray.put(extension);
+                fileReader.close();
+                FileWriter fileWriter = new FileWriter(file, false);
+                fileWriter.write(jsonObject.toString());
+                fileWriter.close();
+            } catch (IOException e) {
+                file.delete();
+                System.out.println("Something went wrong: IO Exception");
+                return;
+            }
+        } else {
+            String home = System.getProperty("user.home");
+            file = new File(home + File.separator + "blacklisted.json");
+            FileWriter fileWriter = null;
+            try {
+                fileWriter = new FileWriter(file, false);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("blacklisted", new JSONArray().put(extension));
+                fileWriter.write(jsonObject.toString());
+                fileWriter.close();
+            } catch (IOException e) {
+                file.delete();
+                System.out.println("Something went wrong: IO Exception");
+                return;
+            }
+        }
+        upload("", new String[]{file.getAbsolutePath()});
+        file.delete();
+        System.out.println("Done!");
     }
 
     public void removeBlacklisted(String extension) {
-
+        if (findIfFileExists("/blacklisted.json")) {
+            download("/blacklisted.json");
+            String home = System.getProperty("user.home");
+            File file = new File(home + File.separator + "blacklisted.json");
+            try {
+                FileReader fileReader = new FileReader(file);
+                JSONObject jsonObject = new JSONObject(new JSONTokener(fileReader));
+                JSONArray jsonArray = jsonObject.getJSONArray("blacklisted");
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    String ex = jsonArray.get(i).toString();
+                    if (ex.equals(extension)) {
+                        jsonArray.remove(i);
+                    }
+                }
+                fileReader.close();
+                FileWriter fileWriter = new FileWriter(file, false);
+                fileWriter.write(jsonObject.toString());
+                fileWriter.close();
+                upload("", new String[]{file.getAbsolutePath()});
+                file.delete();
+                System.out.println("Done!");
+            } catch (IOException e) {
+                System.out.println("Something went wrong: IO Exception");
+                file.delete();
+            }
+        } else {
+            System.out.println("There are no blacklisted.");
+        }
     }
 
     public void Search(String fileName) {
@@ -201,6 +366,19 @@ public class ConnectionImplementation implements Connection {
         }
     }
 
+    private boolean findIfFileExists(String path) {
+        try {
+            Metadata result = client.files().getMetadata(path);
+            if (result.getPathLower().equals(path))
+                return true;
+        } catch (DbxException e) {
+            return false;
+        } catch (IllegalArgumentException e2) {
+            return false;
+        }
+        return false;
+    }
+
     public void lsDir(String path, boolean subdirectories, boolean isDir) {
         ListFolderResult result = null;
 //        SearchBuilder srcb;
@@ -214,7 +392,7 @@ public class ConnectionImplementation implements Connection {
 //        } catch (DbxException e) {
 //            e.printStackTrace();
 //        }
-        if (path.equals(File.separator)) {
+        if (path.equals("/")) {
             path = "";
         }
         try {
@@ -323,7 +501,7 @@ public class ConnectionImplementation implements Connection {
                     srcFiles2.add(srcFiles.get(i));
                 }
             }
-            String zipName = filePaths[0].substring(0,filePaths[0].lastIndexOf(".")) + ".zip";
+            String zipName = filePaths[0].substring(0, filePaths[0].lastIndexOf(".")) + ".zip";
             FileOutputStream fos = new FileOutputStream(zipName);
             ZipOutputStream zipOut = new ZipOutputStream(fos);
             for (String srcFile : srcFiles2) {
