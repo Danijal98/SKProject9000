@@ -16,7 +16,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
 
         //main loop
-        while(true){
+        while (true) {
             //Local or Remote
             while (true) {
                 System.out.println("Connect to local or remote storage (local/remote)");
@@ -63,7 +63,7 @@ public class Main {
                 if (line.equalsIgnoreCase("exit")) {
                     return;
                 }
-                if(line.equalsIgnoreCase("disconnect")){
+                if (line.equalsIgnoreCase("disconnect")) {
                     break;
                 }
                 try {
@@ -88,17 +88,13 @@ public class Main {
 
     private static boolean doCommand(Connection connection, String command, String arguments) {
         if (command.equals("upload")) {
-            if (!connection.isAdmin())
-                System.out.println("This command is only for admin!");
-            else {
-                String[] parts = arguments.split(";", 3);
-                if (parts.length == 2) {
-                    String[] paths = parts[1].split(",");
-                    connection.upload(parts[0], paths);
-                } else if (parts.length == 3) {
-                    String[] paths = parts[2].split(",");
-                    connection.upload(parts[0], parts[1], paths);
-                }
+            String[] parts = arguments.split(";", 3);
+            if (parts.length == 2) {
+                String[] paths = parts[1].split(",");
+                connection.upload(parts[0], paths);
+            } else if (parts.length == 3) {
+                String[] paths = parts[2].split(",");
+                connection.upload(parts[0], parts[1], paths);
             }
         } else if (command.equals("download")) {
             connection.download(arguments);
@@ -110,10 +106,6 @@ public class Main {
             String[] parts = arguments.split(";");
             connection.getMeta(parts[0], parts[1]);
         } else if (command.equals("addUser")) {
-            if (!connection.isAdmin()) {
-                System.out.println("This command is only for admin!");
-                return true;
-            }
             String[] parts = arguments.split(" ");
             UserPrivilege userPrivilege = null;
             if (parts[2].equalsIgnoreCase("ADMIN")) {
@@ -126,23 +118,11 @@ public class Main {
             }
             connection.addUser(parts[0], parts[1], userPrivilege);
         } else if (command.equals("mkDir")) {
-            if (!connection.isAdmin()) {
-                System.out.println("This command is only for admin!");
-                return true;
-            }
             String[] parts = arguments.split(",");
             if (!connection.mkDir(parts)) return false;
         } else if (command.equals("mkFile")) {
-            if (!connection.isAdmin()) {
-                System.out.println("This command is only for admin!");
-                return true;
-            }
             connection.mkFile(arguments);
         } else if (command.equals("deleteItem")) {
-            if (!connection.isAdmin()) {
-                System.out.println("This command is only for admin!");
-                return true;
-            }
             connection.deleteItem(arguments);
         } else if (command.equals("isBlacklisted")) {
             booleanOutput(connection.isBlacklisted(arguments));

@@ -64,6 +64,10 @@ public class ConnectionImplementation implements Connection {
 
     @Override
     public boolean upload(String destination, String[] paths) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return true;
+        }
         if (paths.length > 1) {
             File pom = new File(paths[0]);
             String createdName = pom.getName().substring(0,pom.getName().lastIndexOf("."));
@@ -82,7 +86,10 @@ public class ConnectionImplementation implements Connection {
 
     @Override
     public boolean upload(String destination, String zipName, String[] paths) {
-        //Zipujemo sve, prebacimo taj zip u destination, obrisemo zip originalni
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return true;
+        }
         zipFiles(paths);
         String originName = paths[0].substring(0,paths[0].lastIndexOf(".")) + ".zip";
         File origin = new File(originName);
@@ -138,6 +145,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addMeta(String path, String key, String value) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         String newPath = META_STORAGE + File.separator + path;
 
         JSONObject jsonObject = new JSONObject();
@@ -204,6 +215,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addUser(String name, String password, UserPrivilege privilege) {
+        if (!isAdmin()) {
+            System.out.println("This command is only for admin!");
+            return;
+        }
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("username", name);
         jsonObject.put("password", password);
@@ -255,6 +270,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public boolean mkDir(String[] arguments) {
+        if (!isAdmin()) {
+            System.out.println("This command is only for admin!");
+            return true;
+        }
         for (String p : arguments) {
             String[] parts = p.split(" ");
             String path = "";
@@ -311,6 +330,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void mkFile(String path) {
+        if (!isAdmin()) {
+            System.out.println("This command is only for admin!");
+            return;
+        }
         File file = new File(this.path + File.separator + STORAGE + File.separator + path);
         if (isBlacklisted(returnExtension(file))) {
             System.out.println("Extension is blacklisted.");
@@ -332,6 +355,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void deleteItem(String path) {
+        if (!isAdmin()) {
+            System.out.println("This command is only for admin!");
+            return;
+        }
         File file = new File(path);
         if (currentPrivilege.equals(UserPrivilege.GUEST) || file.getName().equals("users.json") || file.getName().equals("blacklisted.json") || currentPrivilege.equals(UserPrivilege.GUEST)) {
             System.out.println("Can't do that");
@@ -407,6 +434,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addBlacklisted(String extension) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         File file = new File(this.path + File.separator + "blacklisted.json");
         if (file.exists()) {
             try {
@@ -437,6 +468,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void removeBlacklisted(String extension) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         File file = new File(this.path + File.separator + "blacklisted.json");
         if (file.exists()) {
             try {
@@ -551,6 +586,10 @@ public class ConnectionImplementation implements Connection {
             ZipOutputStream zipOut = new ZipOutputStream(fos);
             for (String srcFile : srcFiles2) {
                 File fileToZip = new File(srcFile);
+                if(isBlacklisted(returnExtension(fileToZip))){
+                    System.out.println("This extension is blacklisted. Skipping this file: " + fileToZip.getPath());
+                    continue;
+                }
                 FileInputStream fis = new FileInputStream(fileToZip);
                 ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
                 zipOut.putNextEntry(zipEntry);

@@ -5,7 +5,6 @@ import api.documentation.UserPrivilege;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.*;
-import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver;
 import de.vandermeer.asciitable.AsciiTable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -59,7 +58,11 @@ public class ConnectionImplementation implements Connection {
         }
     }
 
-    public boolean upload(String destination, String... paths) {
+    public boolean upload(String destination, String... paths){
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return true;
+        }
         try {
             if (destination.equals("/")) {
                 destination = "";
@@ -70,6 +73,9 @@ public class ConnectionImplementation implements Connection {
                 return upload(destination, createdName, paths);
             } else {
                 File file = new File(paths[0]);
+                if(isBlacklisted(returnExtension(file))){
+                    System.out.println("You can't upload blacklisted extensions!");
+                }
                 InputStream inputStream = new FileInputStream(file);
                 client.files().uploadBuilder(STORAGE + destination + "/" + file.getName()).withMode(WriteMode.OVERWRITE).uploadAndFinish(inputStream);
                 inputStream.close();
@@ -81,6 +87,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public boolean upload(String destination, String zipName, String... paths) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return true;
+        }
         try {
             if (destination.equals("/")) {
                 destination = "";
@@ -138,6 +148,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addMeta(String path, String key, String value) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(key, value);
         String pom = path.substring(path.lastIndexOf("/") + 1);
@@ -223,6 +237,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addUser(String name, String password, UserPrivilege privilege) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         if (!findIfFileExists("/users.json")) {
             addFirstUser(name, password, privilege);
             return;
@@ -292,6 +310,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public boolean mkDir(String[] arguments) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return true;
+        }
         for (String dirName : arguments) {
             if (!dirName.startsWith("/")) {
                 System.out.println("Check path.(Start with /)");
@@ -317,7 +339,7 @@ public class ConnectionImplementation implements Connection {
                     System.out.println("There was an error.");
                     return false;
                 } catch (IllegalArgumentException e2) {
-                    System.out.println("Check path");
+                    System.out.println("You are probably missing / somewhere, check path!");
                     return false;
                 }
             } else {
@@ -339,20 +361,25 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void mkFile(String path) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         String home = System.getProperty("user.home");
         String fileName = path.substring(path.lastIndexOf("/") + 1);
         path = path.replace(path.substring(path.lastIndexOf("/")), "");
         File file = new File(home + File.separator + fileName);
-        /*
-        if(Search(fileName)){
+
+        if(findIfFileExists(path)){
             System.out.println("File already exists!");
             return;
         }
-         */
+
         if (isBlacklisted(returnExtension(file))) {
             System.out.println("Extension is blacklisted.");
             return;
         }
+
         try {
             if (file.createNewFile()) {
                 upload(path, new String[]{file.getPath()});
@@ -367,6 +394,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void deleteItem(String path) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         if (!findIfFileExists(STORAGE + path)) {
             System.out.println("File doesn't exist.");
         }
@@ -422,6 +453,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void addBlacklisted(String extension) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         File file = null;
         if (findIfFileExists("/blacklisted.json")) {
             download("/blacklisted.json", false);
@@ -472,6 +507,10 @@ public class ConnectionImplementation implements Connection {
     }
 
     public void removeBlacklisted(String extension) {
+        if (!isAdmin()){
+            System.out.println("This command is only for admin!");
+            return;
+        }
         if (findIfFileExists("/blacklisted.json")) {
             download("/blacklisted.json", false);
             String home = System.getProperty("user.home");
@@ -650,6 +689,10 @@ public class ConnectionImplementation implements Connection {
             ZipOutputStream zipOut = new ZipOutputStream(fos);
             for (String srcFile : srcFiles2) {
                 File fileToZip = new File(srcFile);
+                if(isBlacklisted(returnExtension(fileToZip))){
+                    System.out.println("This extension is blacklisted. Skipping this file: " + fileToZip.getPath());
+                    continue;
+                }
                 FileInputStream fis = new FileInputStream(fileToZip);
                 ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
                 zipOut.putNextEntry(zipEntry);
