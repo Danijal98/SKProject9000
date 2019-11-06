@@ -127,7 +127,7 @@ public class Main {
         } else if (command.equals("isBlacklisted")) {
             booleanOutput(connection.isBlacklisted(arguments));
         } else if (command.equals("search")) {
-            connection.Search(arguments);
+            connection.search(arguments);
         } else if (command.equals("addBlacklisted")) {
             connection.addBlacklisted(arguments);
         } else if (command.equals("removeBlacklisted")) {

@@ -533,7 +533,7 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("mkFile", "makes file to the chosen path", "mkFile <path + fileName>");
         at.addRule();
-        at.addRow("deleteItem", "deletes item at a chosen path", "deleteItem <path> <fileName>");
+        at.addRow("deleteItem", "deletes item at a chosen path", "deleteItem <path + fileName>");
         at.addRule();
         at.addRow("isLoggedIn", "checks if user is logged in", "No arguments needed");
         at.addRule();
@@ -575,16 +575,10 @@ public class ConnectionImplementation implements Connection {
     private void zipFiles(String... filePaths) {
         try {
             List<String> srcFiles = Arrays.asList(filePaths);
-            List<String> srcFiles2 = new ArrayList<String>();
-            for (int i = 0; i < srcFiles.size(); i++) {
-                if (!isBlacklisted(returnExtension(new File(srcFiles.get(i))))) {
-                    srcFiles2.add(srcFiles.get(i));
-                }
-            }
             String zipName = filePaths[0].substring(0,filePaths[0].lastIndexOf(".")) + ".zip";
             FileOutputStream fos = new FileOutputStream(zipName);
             ZipOutputStream zipOut = new ZipOutputStream(fos);
-            for (String srcFile : srcFiles2) {
+            for (String srcFile : srcFiles) {
                 File fileToZip = new File(srcFile);
                 if(isBlacklisted(returnExtension(fileToZip))){
                     System.out.println("This extension is blacklisted. Skipping this file: " + fileToZip.getPath());
@@ -608,7 +602,7 @@ public class ConnectionImplementation implements Connection {
         }
     }
 
-    public void Search(String fileName) {
+    public void search(String fileName) {
         List<File> files = new ArrayList<File>();
         getFiles(this.path + File.separator + STORAGE, files, true);
         for (int i = 0; i < files.size(); i++) {
