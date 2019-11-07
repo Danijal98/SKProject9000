@@ -27,6 +27,8 @@ public class ConnectionImplementation implements Connection {
         File dir = new File(this.path);
         File file = new File(this.path + File.separator + "users.json");
         if (!dir.exists()) {
+            this.currentPrivilege = UserPrivilege.ADMIN;
+            this.currentUser = user;
             String str = "";
             mkDir(str.split(""));
             addUser(user, password, UserPrivilege.ADMIN);
@@ -49,10 +51,7 @@ public class ConnectionImplementation implements Connection {
             }
             fileReader.close();
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (currentUser == null && currentPrivilege == null) {
-
+            System.out.println("Something went wrong!");
         }
     }
 
@@ -365,6 +364,7 @@ public class ConnectionImplementation implements Connection {
             return;
         }
         if (deleteFolder(this.path + File.separator + STORAGE + File.separator + path)) {
+            deleteFolder(this.path + File.separator + META_STORAGE + File.separator + path + ".json");
             System.out.println("Done!");
         } else {
             System.out.println("Something went wrong.");

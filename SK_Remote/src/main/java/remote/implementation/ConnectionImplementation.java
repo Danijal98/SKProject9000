@@ -60,7 +60,7 @@ public class ConnectionImplementation implements Connection {
             addUser(currentUser, password, currentPrivilege);
             this.currentUser = currentUser;
             this.currentPrivilege = UserPrivilege.ADMIN;
-        }else{
+        } else {
             jsonDownload("/users.json");
             String home = System.getProperty("user.home");
             File file = new File(home + File.separator + "users.json");
@@ -234,7 +234,7 @@ public class ConnectionImplementation implements Connection {
                     fileWriter.write(jsonObjectExisting.toString());
                     fileWriter.close();
                     metaPath = metaPath.substring(0, metaPath.lastIndexOf("/"));
-                    upload(metaFile.getPath(),metaPath);
+                    upload(metaFile.getPath(), metaPath);
                     metaFile.delete();
                 } catch (IOException e) {
                     System.out.println("Something went wrong: IO Exception");
@@ -251,7 +251,7 @@ public class ConnectionImplementation implements Connection {
                     fileWriter.write(mainJsn.toString());
                     fileWriter.close();
                     metaPath = metaPath.substring(0, metaPath.lastIndexOf("/"));
-                    upload(metaFile.getPath(),metaPath);
+                    upload(metaFile.getPath(), metaPath);
                     metaFile.delete();
                 } catch (IOException e) {
                     System.out.println("Something went wrong: IO Exception");
@@ -335,7 +335,7 @@ public class ConnectionImplementation implements Connection {
                 return;
             }
         } else System.out.println("File doesn't exist?");
-        upload(file.getAbsolutePath(),"");
+        upload(file.getAbsolutePath(), "");
         System.out.println("User added!");
         file.delete();
     }
@@ -361,7 +361,7 @@ public class ConnectionImplementation implements Connection {
             file.delete();
             return;
         }
-        upload(file.getAbsolutePath(),"");
+        upload(file.getAbsolutePath(), "");
         System.out.println("User added!");
         file.delete();
     }
@@ -422,6 +422,8 @@ public class ConnectionImplementation implements Connection {
             System.out.println("This command is only for admin!");
             return;
         }
+        if (path.charAt(0) != '/')
+            path = "/" + path;
         String home = System.getProperty("user.home");
         String fileName = path.substring(path.lastIndexOf("/") + 1);
         path = path.replace(path.substring(path.lastIndexOf("/")), "");
@@ -457,10 +459,22 @@ public class ConnectionImplementation implements Connection {
         }
         if (!findIfFileExists(this.path + STORAGE + path)) {
             System.out.println("File doesn't exist.");
+            return;
         }
         try {
             DeleteResult deleteResult = client.files().deleteV2(this.path + STORAGE + path);
             if (path.equals(deleteResult.getMetadata().getPathDisplay().replace(this.path + STORAGE, ""))) {
+                System.out.println("Done!");
+            }
+        } catch (DbxException e) {
+            System.out.println("Something went wrong.");
+        }
+        if (!findIfFileExists(this.path + META_STORAGE + path.substring(0, path.lastIndexOf(".")) + ".json")) {
+            return;
+        }
+        try {
+            DeleteResult deleteResult = client.files().deleteV2(this.path + META_STORAGE + path.substring(0, path.lastIndexOf(".")) + ".json");
+            if (path.equals(deleteResult.getMetadata().getPathDisplay().replace(this.path + META_STORAGE, ""))) {
                 System.out.println("Done!");
             }
         } catch (DbxException e) {
@@ -558,7 +572,7 @@ public class ConnectionImplementation implements Connection {
                 return;
             }
         }
-        upload(file.getAbsolutePath(),"");
+        upload(file.getAbsolutePath(), "");
         file.delete();
         System.out.println("Done!");
     }
@@ -586,7 +600,7 @@ public class ConnectionImplementation implements Connection {
                 FileWriter fileWriter = new FileWriter(file, false);
                 fileWriter.write(jsonObject.toString());
                 fileWriter.close();
-                upload(file.getAbsolutePath(),"");
+                upload(file.getAbsolutePath(), "");
                 file.delete();
                 System.out.println("Done!");
             } catch (IOException e) {
