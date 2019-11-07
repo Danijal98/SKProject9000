@@ -720,8 +720,8 @@ public class ConnectionImplementation implements Connection {
         at.addRule();
         at.addRow("addUser", "adds user to the current storage", "addUser <username> <password> <userPrivileges(admin/guest)>");
         at.addRule();
-        at.addRow("mkDir", "makes directory to the chosen path from storage root. If no directory is given, root is chosen", "mkDir <path> <dirName> |" +
-                "mkDir <dirName> | mkDir <path> <dirName{1-5}> | mkDir <dirName{1-5}>");
+        at.addRow("mkDir", "makes directory to the chosen path from storage root. If no directory is given, root is chosen", "mkDir <path + dirName> |" +
+                "mkDir <path + dirName{1-5}>");
         at.addRule();
         at.addRow("mkFile", "makes file to the chosen path", "mkFile <path + fileName>");
         at.addRule();
