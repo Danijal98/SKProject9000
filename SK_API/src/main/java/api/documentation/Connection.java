@@ -57,7 +57,7 @@ public interface Connection {
     boolean mkDir(String[] paths);
 
     /**
-     * Makes files with given paths
+     * Makes files with given path
      * @param path - path of new file
      */
     void mkFile(String path);
@@ -83,7 +83,7 @@ public interface Connection {
     /**
      * Checks if given extension is blacklisted
      * @param extension
-     * @return true or false
+     * @return true if extension is blacklisted
      */
     boolean isBlacklisted(String extension);
 
@@ -101,9 +101,9 @@ public interface Connection {
 
     /**
      * Lists files in directories (if chosen) from selected path
-     * @param path
-     * @param subdirectories
-     * @param isDir
+     * @param path - path in which to look
+     * @param subdirectories - set true if you want to go into subfolders
+     * @param isDir - set true if you want to see only directories
      */
     void lsDir(String path, boolean subdirectories, boolean isDir);
 

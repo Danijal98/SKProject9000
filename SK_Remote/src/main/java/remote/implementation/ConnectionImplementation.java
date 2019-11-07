@@ -469,16 +469,28 @@ public class ConnectionImplementation implements Connection {
         } catch (DbxException e) {
             System.out.println("Something went wrong.");
         }
-        if (!findIfFileExists(this.path + META_STORAGE + path.substring(0, path.lastIndexOf(".")) + ".json")) {
-            return;
-        }
-        try {
-            DeleteResult deleteResult = client.files().deleteV2(this.path + META_STORAGE + path.substring(0, path.lastIndexOf(".")) + ".json");
-            if (path.equals(deleteResult.getMetadata().getPathDisplay().replace(this.path + META_STORAGE, ""))) {
-                System.out.println("Done!");
+        if (path.contains(".")) {
+            if (findIfFileExists(this.path + META_STORAGE + path.substring(0, path.lastIndexOf(".")) + ".json")) {
+                try {
+                    DeleteResult deleteResult = client.files().deleteV2(this.path + META_STORAGE + path.substring(0, path.lastIndexOf(".")) + ".json");
+                    if (path.equals(deleteResult.getMetadata().getPathDisplay().replace(this.path + META_STORAGE, ""))) {
+                        System.out.println("Done!");
+                    }
+                } catch (DbxException e) {
+                    System.out.println("Something went wrong.");
+                }
             }
-        } catch (DbxException e) {
-            System.out.println("Something went wrong.");
+        } else {
+            if (findIfFileExists(this.path + META_STORAGE + path + ".json")) {
+                try {
+                    DeleteResult deleteResult = client.files().deleteV2(this.path + META_STORAGE + path.substring(0, path.lastIndexOf(".")) + ".json");
+                    if (path.equals(deleteResult.getMetadata().getPathDisplay().replace(this.path + META_STORAGE, ""))) {
+                        System.out.println("Done!");
+                    }
+                } catch (DbxException e) {
+                    System.out.println("Something went wrong.");
+                }
+            }
         }
     }
 

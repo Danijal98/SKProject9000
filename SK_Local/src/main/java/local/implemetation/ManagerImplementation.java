@@ -20,8 +20,4 @@ public class ManagerImplementation implements Manager {
         return new ConnectionImplementation(path, username, password);
     }
 
-    public Connection initConnection(String DatabaseName) {
-        return null;
-    }
-
 }

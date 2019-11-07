@@ -25,10 +25,6 @@ public class ManagerImplementation implements Manager {
         return new ConnectionImplementation(path,username,password,client);
     }
 
-    public Connection initConnection(String DatabaseName) {
-        return null;
-    }
-
     private static DbxClientV2 createTestDbxClientV2(String accessToken) {
         DbxRequestConfig config = DbxRequestConfig.newBuilder(accessToken).build();
         return new DbxClientV2(config, accessToken);
